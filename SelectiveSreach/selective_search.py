@@ -1,12 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import division
 
-import skimage.io
 import skimage.feature
-import skimage.color
-import skimage.transform
-import skimage.util
-import skimage.segmentation
 import numpy as np
 from matplotlib import pyplot as plt
 from PIL import Image
@@ -159,8 +154,6 @@ def _extract_regions(img):
     print(img.shape,type(img))
 
     # get hsv image
-    # hsv = skimage.color.rgb2hsv(img[:, :, :3])
-
     hsv = cv2.cvtColor(img.astype(np.uint8),cv2.COLOR_BGR2HSV)
 
     # pass 1: count pixel positions

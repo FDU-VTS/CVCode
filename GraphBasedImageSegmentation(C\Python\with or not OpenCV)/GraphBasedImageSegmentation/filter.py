@@ -5,10 +5,8 @@ from convolve import *
 
 WIDTH = 4
 
-class Filter:
 
-    def __init__(self):
-        pass
+class Filter:
 
     @staticmethod
     def normalize(mask):
@@ -20,7 +18,6 @@ class Filter:
         for i in range(length):
             mask[i] /= sum
         return mask
-
 
     @staticmethod
     def laplacian(image_origin):
@@ -37,7 +34,6 @@ class Filter:
 
         return image_lap
 
-
     @staticmethod
     def make_gauss(sigma):
         sigma = max(sigma,0.01)
@@ -46,7 +42,6 @@ class Filter:
         for i in range(length):
             mask[i] = np.exp(-0.5 * np.square(i/sigma))
         return mask
-
 
     @staticmethod
     def smooth(src,sigma):
