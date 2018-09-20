@@ -1,3 +1,3 @@
 ### Introduction
 
-#### It's a repository about algorithm and paper recurrent. Every directory is an implement.
+#### It's a repository about algorithm recurrent, almostly basic CV algorithm. 
