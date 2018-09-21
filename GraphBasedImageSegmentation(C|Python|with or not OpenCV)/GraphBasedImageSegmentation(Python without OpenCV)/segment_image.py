@@ -4,7 +4,6 @@ from filter import *
 import random
 import numpy as np
 from segment_graph import *
-import matplotlib.pyplot as plt
 
 
 # difference between 2 pixels
