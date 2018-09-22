@@ -19,20 +19,6 @@ class Filter:
             mask[i] /= sum
         return mask
 
-    @staticmethod
-    def laplacian(image_origin):
-
-        image_lap = image_origin
-        image_shape = image_origin.shape
-        width = image_shape[0]
-        height = image_shape[1]
-
-        for y in range(height[1,-1]):
-            for x in range(width[1,-1]):
-                image_lap[x,y] = image_origin[x-1,y] + image_origin[x+1,y] + image_origin[x,y-1] \
-                                 + image_origin[x,y+1]- 4*image_origin[x,y]
-
-        return image_lap
 
     @staticmethod
     def make_gauss(sigma):
@@ -42,6 +28,7 @@ class Filter:
         for i in range(length):
             mask[i] = np.exp(-0.5 * np.square(i/sigma))
         return mask
+
 
     @staticmethod
     def smooth(src,sigma):
