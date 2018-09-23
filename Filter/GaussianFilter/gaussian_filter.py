@@ -24,14 +24,29 @@ def convolve_1d(origin, sigma):
     for x in range(len(origin)):
         sum_x = mask[0]*origin[x]
         for i in range(1,length):
-            sum_x += mask[i]*origin[max(x-i,0)] + mask[i]*origin[min(x+i,length-1)]
+            sum_x += mask[i]*origin[max(x-i, 0)] + mask[i]*origin[min(x+i, len(origin)-1)]
         result[x] = sum_x
     return result
+
+
+def convovle_2d(origin, sigma):
+    origin = np.array(origin)
+    result = np.zeros(origin.shape)
+    for i in range(origin.shape[1]):
+        result[:, i] = convolve_1d(origin[:, i], sigma)
+    origin = result.T
+    result = origin
+    for i in range(origin.shape[1]):
+        result[:, i] = convolve_1d(origin[:, i], sigma)
+    return result.T
+
+def convocle_matrix2d(origin, sigma):
+    pass
 
 
 def gaussian_filter(origin_image):
     origin_image = np.array(origin_image, dtype=np.float)
 
 
-
-print(convolve_1d([1.0, 2.0, 3.0, 4.0, 5.0], 1))
+# print(convolve_1d([1.0, 2.0, 3.0, 4.0, 5.0], 1))
+print(convovle_2d([[1.0, 2.0, 3.0, 4.0, 5.0], [1.0, 2.0, 3.0, 4.0, 5.0]], 1))
