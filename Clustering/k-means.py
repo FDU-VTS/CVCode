@@ -1,5 +1,12 @@
 # -*- coding:utf-8 -*-
 
+#   the most important is the distance between 2 clusters
+#   and the average value in a cluster
+#   in this implement, distance is a - b
+#   average is sum()/number
+#   break condition is k * threshold
+
+
 import numpy as np
 
 
@@ -30,15 +37,14 @@ def k_means(data_set, k, threshold):
         # if difference between cluster and cluster_old < 6, break
         cluster_key = np.array([k for k, v in cluster.items()])
         cluster_oldkey = np.array([k for k, v in cluster_old.items()])
-        if np.sum(cluster_key - cluster_oldkey) < 6:
+        if np.sum(cluster_key - cluster_oldkey) < threshold * k:
             break
         num += 1
-
     return cluster
 
 if __name__ == "__main__":
-    a = np.random.random_sample(100) * 100
-    cluster = k_means(a, 3, 2)
+    a = np.random.random_sample(1000) * 50
+    cluster = k_means(a, 30, 1)
     for k, v in cluster.items():
         print(k, v)
 
