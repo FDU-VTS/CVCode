@@ -1,11 +1,12 @@
 # -*- coding:utf-8 -*-
-
-from __future__ import print_function
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 
+# input -> Conv -> ReLu -> pooling -> Conv
+# -> ReLu -> pooling -> reshape -> FC
+# -> ReLu -> FC -> ReLu -> FC -> MSELoss
 
 class Net(nn.Module):
 
@@ -18,6 +19,7 @@ class Net(nn.Module):
         self.fc3 = nn.Linear(84, 10)
 
     def forward(self, x):
+        # Max poolnig over a (2, 2) window
         x = F.max_pool2d(F.relu(self.conv1(x)), (2, 2))
         x = F.max_pool2d(F.relu(self.conv2(x)), 2)
         x = x.view(-1, self.num_flat_features(x))
@@ -33,23 +35,15 @@ class Net(nn.Module):
             num_features *= s
         return num_features
 
-
-if __name__ == "__main__":
-    net = Net()
-    input = torch.randn(1, 1, 32, 32)
-    output = net(input)
-    target = torch.randn(10)
-    target = target.view(1, -1)
-    criterion = nn.MSELoss()
-    loss = criterion(output, target)
-    net.zero_grad()
-    loss.backward()
-    learning_rate = 0.01
-    for f in net.parameters():
-        f.data.sub_(f.grad.data * learning_rate)
-    optimizer = optim.SGD(net.parameters(), lr=0.01)
-    optimizer.zero_grad()
-    output = net(input)
-    loss = criterion(output, target)
-    loss.backward()
-    optimizer.step()
+net = Net()
+params = list(net.parameters())
+input = torch.randn(1, 1, 32, 32)
+output = net(input)
+target = torch.randn(10)
+target = target.view(1, -1)
+criterion = nn.MSELoss()
+loss = criterion(output, target)
+optimizer = optim.SGD(net.parameters(), lr=0.01)
+optimizer.zero_grad() # same as net.zero_grad()
+loss.backward()
+optimizer.step()
