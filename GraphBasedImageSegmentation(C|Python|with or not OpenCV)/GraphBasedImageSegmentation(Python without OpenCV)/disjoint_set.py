@@ -29,5 +29,5 @@ class universe:
             self.elts[x][2] = y
             self.elts[y][1] += self.elts[x][1]
             if self.elts[x][0] == self.elts[y][0]:
-                self.elts[y][1] += 1
+                self.elts[y][0] += 1
         self.num += -1

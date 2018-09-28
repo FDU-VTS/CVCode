@@ -14,8 +14,7 @@ def diff(r,g,b,x1,y1,x2,y2):
 
 
 def segment_image(image_origin,sigma,k,min_size,num_css):
-    width = image_origin.shape[0]
-    height = image_origin.shape[1]
+    width, height, _ = image_origin.shape
 
     r = image_origin[:, :, 0]
     g = image_origin[:, :, 1]

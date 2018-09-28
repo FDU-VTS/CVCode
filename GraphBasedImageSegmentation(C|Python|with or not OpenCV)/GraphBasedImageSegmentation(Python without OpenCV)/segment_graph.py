@@ -16,9 +16,11 @@ def segment_graph(num_vertices,num_edges,edges,c):
         threshold[i] = THRESHOLD(1,c)
     for i in range(num_edges):
         pedge = edges[i]
+        # point a from list
         a = u.find(pedge[0])
+        # point b from list
         b = u.find(pedge[1])
-
+        # a!=b prevent to cause connected graph
         if a != b:
             if pedge[2] <= threshold[a] and pedge[2] <= threshold[b]:
                 u.join(a,b)
