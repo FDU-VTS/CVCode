@@ -4,6 +4,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 
+
 # input -> Conv -> ReLu -> pooling -> Conv
 # -> ReLu -> pooling -> reshape -> FC
 # -> ReLu -> FC -> ReLu -> FC -> MSELoss
