@@ -100,6 +100,7 @@ def _calc_colour_hist(img):
 
     return hist
 
+
 # convert img to LBP mode
 def _calc_texture_gradient(img):
     """
@@ -289,7 +290,7 @@ def selective_search(im_orig, scale=1.0, sigma=0.8, min_size=50):
     # hierarchal search
     while S != {}:
 
-        # get highest similarity
+        # get highest similarity's image i and image j
         i, j = sorted(S.items(), key=lambda i: i[1])[-1][0]
 
         # merge corresponding regions
@@ -322,6 +323,7 @@ def selective_search(im_orig, scale=1.0, sigma=0.8, min_size=50):
         })
 
     return img, regions
+
 
 if __name__ == "__main__":
     origin_image = np.array(Image.open('./lena.jpg'))
