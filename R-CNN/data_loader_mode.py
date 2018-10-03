@@ -56,7 +56,7 @@ class Rescale(object):
 
     def __call__(self, sample):
 
-        image, landmarks = sample['image', sample['landmarks']]
+        image, landmarks = sample['image'], sample['landmarks']
         h, w = image.shape[:2]
         if isinstance(self.output_size, int):
             if h > w:
