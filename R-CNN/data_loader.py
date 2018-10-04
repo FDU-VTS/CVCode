@@ -4,11 +4,12 @@ import torch
 import torchvision
 from torchvision import transforms
 from torch.utils.data import Dataset, DataLoader
-import os
 import skimage.io
 from skimage import transform
 import xml.dom.minidom
 import matplotlib.pyplot as plt
+import warnings
+warnings.filterwarnings('ignore')
 
 classes = np.asarray(["aeroplane", "bicycle", "bird", "boat", "bottle", "bus", "car",
                       "cat", "chair", "cow", "diningtable", "dog", "horse", "motorbike",
@@ -17,9 +18,11 @@ classes_num = np.asarray([i for i in range(20)])
 
 
 class PascalVocLoader(Dataset):
-    def __init__(self, image_dir, annotation_path, transform=None):
+
+    def __init__(self, image_dir, annotation_path, txt_path ,transform=None):
         self.image_dir = image_dir
         self.annotation_path = annotation_path
+        self.txt_path = txt_path
         self.transform = transform
         self.dataset = self.xml_reader()
 
@@ -27,8 +30,9 @@ class PascalVocLoader(Dataset):
         return len(self.dataset)
 
     def __getitem__(self, item):
-        data = dataset[item]
-        data = self.transform(data)
+        data = self.dataset[item]
+        if self.transform:
+            data = self.transform(data)
         return data
 
     # use xml docs to get image:label
@@ -36,12 +40,15 @@ class PascalVocLoader(Dataset):
     def xml_reader(self):
         image_dir = self.image_dir
         annotation_path = self.annotation_path
+        image_pres = self.txt_reader(self.txt_path)
         dataset = []
 
         # get every image in image_path
-        for image_name in os.listdir(image_dir):
+
+        for image_pre in image_pres:
+            print(image_pre)
+            image_name = image_pre + ".jpg"
             image_path = image_dir + image_name
-            image_pre, _ = os.path.splitext(image_name)
             xml_file = annotation_path + image_pre + '.xml'
 
             # convert xml to document
@@ -58,12 +65,16 @@ class PascalVocLoader(Dataset):
                 ymin = int(object.getElementsByTagName('ymin')[0].childNodes[0].data)
                 xmax = int(object.getElementsByTagName('xmax')[0].childNodes[0].data)
                 ymax = int(object.getElementsByTagName('ymax')[0].childNodes[0].data)
-                image_seg = image[xmin:xmax, ymin:ymax]
-                image_label = classes_num[classes == object_name]
+                image_seg = image[ymin:ymax, xmin:xmax]
+                image_label = classes_num[classes == object_name][0]
                 dataset.append((image_seg, image_label))
-            break
-
         return dataset
+
+    @ staticmethod
+    def txt_reader(txt_path):
+        txt = np.loadtxt(txt_path, dtype=str)
+        image_pres = txt[:, 0]
+        return image_pres
 
 
 class Rescale(object):
@@ -94,7 +105,12 @@ class ToTensor(object):
         image = image.transpose([2, 0, 1])
         return [image, label]
 
+
+transformed = transforms.Compose([Rescale((224, 224)), ToTensor()])
 dataset = PascalVocLoader(image_dir="./data/VOC2007/JPEGImages/",
-                          annotation_path="./data/VOC2007/Annotations/")
-composed = transforms.Compose([Rescale((224, 224)), ToTensor()])
-a = composed(dataset[0])
+                          annotation_path="./data/VOC2007/Annotations/",
+                          txt_path="./data/VOC2007/ImageSets/Main/aeroplane_train.txt",
+                          transform=transformed)
+
+
+
