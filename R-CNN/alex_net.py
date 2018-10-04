@@ -1,54 +1,50 @@
 # -*- coding:utf-8 -*-
-import torch
+from data_loader import *
 import torch.utils.data
 import torch.nn as nn
-import torch.functional as f
-import torch.multiprocessing
 import torchvision
 import torchvision.transforms as transforms
-import numpy as np
 import matplotlib.pyplot as plt
 import torch.optim as optim
 import torch.cuda
 import time
-
-
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-class Net(nn.Module):
 
-    def __init__(self):
-        super(Net, self).__init__()
-        self.conv1 = nn.Sequential(
-            nn.Conv2d(3, 6, 5, 1, 0),
-            nn.ReLU(),
-            nn.MaxPool2d(2, 2)
+
+class AlexNet(nn.Module):
+
+    def __init__(self, num_classes=1000):
+        super(AlexNet, self).__init__()
+        self.features = nn.Sequential(
+            nn.Conv2d(3, 64, kernel_size=11, stride=4, padding=2),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(kernel_size=3, stride=2),
+            nn.Conv2d(64, 192, kernel_size=5, padding=2),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(kernel_size=3, stride=2),
+            nn.Conv2d(192, 384, kernel_size=3, padding=1),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(384, 256, kernel_size=3, padding=1),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(256, 256, kernel_size=3, padding=1),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(kernel_size=3, stride=2)
         )
-        self.conv2 = nn.Sequential(
-            nn.Conv2d(6, 16, 5, 1, 0),
-            nn.ReLU(),
-            nn.MaxPool2d(2, 2)
-        )
-        self.dense = nn.Sequential(
-            nn.Linear(16 * 5 * 5, 120),
-            nn.ReLU(),
-            nn.Linear(120, 84),
-            nn.ReLU(),
-            nn.Linear(84, 10)
+        self.classifier = nn.Sequential(
+            nn.Dropout(),
+            nn.Linear(256 * 6 * 6, 4096),
+            nn.ReLU(inplace=True),
+            nn.Dropout(),
+            nn.Linear(4096, 4096),
+            nn.ReLU(inplace=True),
+            nn.Linear(4096, num_classes),
         )
 
     def forward(self, x):
-        x = self.conv1(x)
-        x = self.conv2(x)
-        x = x.view(-1, 16 * 5 * 5)
-        out = self.dense(x)
-        return out
-
-
-def imshow(img):
-    img = img/2 + 0.5
-    npimg = img.numpy()
-    plt.imshow(np.transpose(npimg, (1, 2, 0)))
-    plt.show()
+        x = self.features(x)
+        x = x.view(x.size(0), 256 * 6 * 6)
+        x = self.classifier(x)
+        return x
 
 
 if __name__ == "__main__":
@@ -69,7 +65,7 @@ if __name__ == "__main__":
                                                num_workers=2)
     classes = ('plane', 'car', 'bird', 'cat', 'deer',
                'dog', 'frog', 'horse', 'ship', 'truck')
-    net = Net()
+    net = AlexNet()
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
 

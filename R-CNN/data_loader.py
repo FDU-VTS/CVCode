@@ -1,16 +1,12 @@
 # -*- coding:utf-8 -*-
+
 import numpy as np
-import torch
-import torchvision
-from torchvision import transforms
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import Dataset
 import skimage.io
 from skimage import transform
 import xml.dom.minidom
-import matplotlib.pyplot as plt
 import warnings
 warnings.filterwarnings('ignore')
-
 classes = np.asarray(["aeroplane", "bicycle", "bird", "boat", "bottle", "bus", "car",
                       "cat", "chair", "cow", "diningtable", "dog", "horse", "motorbike",
                       "person", "pottedplant", "sheep", "sofa", "train", "tvmonitor"])
@@ -104,13 +100,6 @@ class ToTensor(object):
         image, label = sample
         image = image.transpose([2, 0, 1])
         return [image, label]
-
-
-transformed = transforms.Compose([Rescale((224, 224)), ToTensor()])
-dataset = PascalVocLoader(image_dir="./data/VOC2007/JPEGImages/",
-                          annotation_path="./data/VOC2007/Annotations/",
-                          txt_path="./data/VOC2007/ImageSets/Main/aeroplane_train.txt",
-                          transform=transformed)
 
 
 
