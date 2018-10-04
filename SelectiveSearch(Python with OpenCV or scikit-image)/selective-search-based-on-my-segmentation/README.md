@@ -16,5 +16,5 @@ tip: For test, I use matplotlib to show the image with boxes instead of saving i
 ```
 
 # Result
-
-![000393.jpg](./000393.jpg) ![result.png](./result.png)
+ - <img src="./000393.jpg" width=400px/>
+ - <img src="./result.png" width=500px>
