@@ -1,6 +1,7 @@
 # -*- coding:utf-8 -*-
 
 import numpy as np
+import torch
 from torch.utils.data import Dataset
 import skimage.io
 from skimage import transform
@@ -15,7 +16,10 @@ classes_num = np.asarray([i for i in range(20)])
 
 class PascalVocLoader(Dataset):
 
-    def __init__(self, image_dir, annotation_path, txt_path ,transform=None):
+    def __init__(self, image_dir="./data/VOC2007/JPEGImages/",
+                 annotation_path="./data/VOC2007/Annotations/",
+                 txt_path="./data/VOC2007/ImageSets/Main/aeroplane_train.txt",
+                 transform=None):
         self.image_dir = image_dir
         self.annotation_path = annotation_path
         self.txt_path = txt_path
@@ -99,6 +103,7 @@ class ToTensor(object):
     def __call__(self, sample):
         image, label = sample
         image = image.transpose([2, 0, 1])
+        image = torch.from_numpy(image)
         return [image, label]
 
 
