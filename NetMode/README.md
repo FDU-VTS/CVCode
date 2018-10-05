@@ -1,0 +1,2 @@
+## basic Net architecture
+ - AlexNet
