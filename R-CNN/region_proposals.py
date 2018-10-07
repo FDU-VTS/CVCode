@@ -1,13 +1,11 @@
 # -*- coding:utf-8 -*-
 import selectivesearch
-import skimage
-import skimage.transform
 from PIL import Image
 import numpy as np
 import matplotlib.pyplot as plt
-import matplotlib.patches as patches
 
 
+# return image regions
 def image_proposal(image):
     # selective search
     # img : (width, height, (r, g, b, masked_pixel))
@@ -20,23 +18,14 @@ def image_proposal(image):
         if r['size'] < 2000:
             continue
         x, y, w, h = r['rect']
-        if w / h > 3 or h / w > 3:
+        if w / h > 1.3 or h / w > 1.3:
             continue
         candidates.add(r['rect'])
+    regions = []
+    for rect in candidates:
+        regions.append(image[rect[1]:rect[1]+rect[3], rect[0]:rect[0]+rect[2]])
 
-    return candidates
+    return regions
 
 
-image = np.array(Image.open("./lena.jpg"))
-candidates = image_proposal(image)
-fig, ax = plt.subplots(ncols=1, nrows=1, figsize=(6, 6))
-ax.imshow(image)
-for x, y, w, h in candidates:
-    print(x, y, w, h)
-    rect = patches.Rectangle(
-        (x, y), w, h, fill=False, edgecolor='red', linewidth=1
-    )
-    ax.add_patch(rect)
-
-plt.show()
 
