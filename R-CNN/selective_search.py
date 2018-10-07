@@ -144,8 +144,6 @@ def _extract_regions(img):
 
     R = {}
 
-    print(img.shape,type(img))
-
     # get hsv image
     hsv = cv2.cvtColor(img.astype(np.uint8),cv2.COLOR_BGR2HSV)
 
@@ -315,3 +313,22 @@ def selective_search(im_orig, scale=1.0, sigma=0.8, min_size=50):
         })
 
     return img, regions
+
+
+def region_proposals(im_orig):
+    # selective search
+    # img : (width, height, (r, g, b, masked_pixel))
+    # regions : list(rect(x_min, y_min, width, height))
+    img, regions = selective_search(im_orig, scale=500, sigma=0.9, min_size=10)
+    candidates = set()
+    for r in regions:
+        if r['rect'] in candidates:
+            continue
+        if r['size'] < 2000:
+            continue
+        x, y, w, h = r['rect']
+        if w / h > 1.3 or h / w > 1.3:
+            continue
+        candidates.add(r['rect'])
+
+    return candidates

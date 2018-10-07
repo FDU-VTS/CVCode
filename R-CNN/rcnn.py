@@ -1,14 +1,24 @@
 # -*- coding:utf-8 -*-
 
 import alex_net
-import region_proposals
-import torchvision.transforms as transforms
+import torch
+import skimage.io
+import skimage.transform as transform
+import selective_search
+import matplotlib.pyplot as plt
 
 
 if __name__ == "__main__":
 
-    net = alex_net.train()
-    regions = region_proposals.image_proposal("./lane.jpg")
-    # resize regions
-    transforms.Resize()
-    # predict
+    model = alex_net.train()
+    image = skimage.io.imread("./lena.jpg")
+    # regions: image[x1:x2, y1:y2]
+    regions = selective_search.region_proposals(image)
+    for region in regions:
+        # region: [x_min, y_min, width, height]
+        image_region = image[region[1]:region[1]+region[3], region[0]:region[0]+region[2]]
+        image_region = transform.resize(image_region, (224, 224))
+        output = model(image_region)
+
+
+
