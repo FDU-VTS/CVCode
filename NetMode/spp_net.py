@@ -48,15 +48,15 @@ class DetectionNetSPP(nn.Module):
         )
 
         self.spp_level = SPPLayer(spp_level)
-        self.linear_model = nn.Sequential([
+        self.classifier = nn.Sequential(
             nn.Linear(self.num_grids*128, 1024),
             nn.ReLU(),
             nn.Linear(1024, 2)
-        ])
+        )
 
     def forward(self, x):
         x = self.conv_model(x)
         x = self.spp_level(x)
-        x = self.linear_model(x)
+        x = self.classifier(x)
 
         return x
