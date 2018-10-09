@@ -1,11 +1,9 @@
 # -*- coding:utf-8 -*-
 
 import alex_net
-import torch
 import skimage.io
 import skimage.transform as transform
 import selective_search
-import matplotlib.pyplot as plt
 
 
 if __name__ == "__main__":

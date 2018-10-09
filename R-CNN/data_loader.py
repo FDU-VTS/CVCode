@@ -46,7 +46,6 @@ class PascalVocLoader(Dataset):
         # get every image in image_path
 
         for image_pre in image_pres:
-            print(image_pre)
             image_name = image_pre + ".jpg"
             image_path = image_dir + image_name
             xml_file = annotation_path + image_pre + '.xml'

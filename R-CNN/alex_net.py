@@ -2,12 +2,9 @@
 import data_loader
 import torch.utils.data
 import torch.nn as nn
-import torchvision
 import torchvision.transforms as transforms
-import matplotlib.pyplot as plt
 import torch.optim as optim
 import torch.cuda
-import time
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 
@@ -76,6 +73,7 @@ def train():
             if i % 10 == 9:
                 print(running_loss/10)
                 running_loss = 0.0
+                break
 
     return net
 
