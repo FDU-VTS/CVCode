@@ -57,6 +57,7 @@ def train():
     train_loader = torch.utils.data.DataLoader(train_set, batch_size=4, shuffle=True, num_workers=2)
     # get net | loss function | SGD
     net = AlexNet(num_classes=20).to(device)
+    net = nn.DataParallel(net, device_ids=[0])
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
     # train
@@ -64,7 +65,8 @@ def train():
         running_loss = 0.0
         for i, data in enumerate(train_loader, 0):
             inputs, labels = data
-            inputs = inputs.float()
+            inputs = inputs.float().to(device)
+            labels = labels.to(device)
             optimizer.zero_grad()
             outputs = net(inputs)
             loss = criterion(outputs, labels)
