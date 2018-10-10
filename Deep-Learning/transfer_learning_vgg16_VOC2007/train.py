@@ -281,29 +281,11 @@ def get_regions():
         # excluding regions smaller than 2000 pixels
         if r['size'] < 100:
             continue
-        # # distorted rects
-        # x, y, w, h = r['rect']
-        # if w / h > 1.2 or h / w > 1.2:
-        #     continue
         candidates.add(r['rect'])
 
     # draw rectangles on the original image
 
     for i, R  in enumerate(candidates):
         x, y ,w, h = R
-        # img_will_resize = np.asarray(img[y:y + h, x:x + w, :], dtype=float)
-        # print(img[y:y + h, x:x + w, :].dtype)
         nor_img = transform.resize(img[y:y + h, x:x + w, :], (224, 224))
-        # nor_img = np.asarray(nor_img, dtype=np.uint8)
-        # print(nor_img)
-        # print(nor_img.dtype)
-        # cv2.imwrite("./region/"+str(i)+'.jpg', nor_img)
         io.imsave("./region/"+str(i)+'.jpg', nor_img)
-
-
-# def main():
-#     get_regions()
-#
-# if __name__ == "__main__":
-#     main()
-#

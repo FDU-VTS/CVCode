@@ -8,7 +8,6 @@ import os
 import torch.nn as nn
 import torch
 from torchvision import datasets, models, transforms
-# import PIL.Image.Image as Image
 
 
 def set_parameter_requires_grad(model, feature_extracting):
@@ -107,23 +106,13 @@ def get_regions(img_path):
         # excluding regions smaller than 2000 pixels
         if r['size'] < 100:
             continue
-        # # distorted rects
-        # x, y, w, h = r['rect']
-        # if w / h > 1.2 or h / w > 1.2:
-        #     continue
         candidates.add(r['rect'])
 
     # draw rectangles on the original image
 
     for i, R  in enumerate(candidates):
         x, y ,w, h = R
-        # img_will_resize = np.asarray(img[y:y + h, x:x + w, :], dtype=float)
-        # print(img[y:y + h, x:x + w, :].dtype)
         nor_img = transform.resize(img[y:y + h, x:x + w, :], (224, 224))
-        # nor_img = np.asarray(nor_img, dtype=np.uint8)
-        # print(nor_img)
-        # print(nor_img.dtype)
-        # cv2.imwrite("./region/"+str(i)+'.jpg', nor_img)
         io.imsave("./region/"+str(i)+'.jpg', nor_img)
 
 def get_prediction_lists():
@@ -174,18 +163,11 @@ def main():
             continue
         print("name:", pre_image)
         img = io.imread("./region/"+pre_image)
-       # img = transforms.ToPILImage()(img).convert('RGB')
-        #print(type(img))
-        #print(img.size())
         test = torch.zeros(8, 3, 224, 224)
         img = torch.from_numpy(img)
-        #print(img.size())
         test[0, 0, :, :] = img[:, :, 0]
         test[0, 1, :, :] = img[:, :, 1]
         test[0, 2, :, :] = img[:, :, 2]
-        #test = transform(test)
-        # print(type(img))
-        # img = Image.open("./region/"+pre_image).convert('RGB')
         test = test.to(device)
         result = prediction(model, test)
         print(result[1][0], result[0][0])
