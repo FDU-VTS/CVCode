@@ -70,8 +70,8 @@ def train():
             loss.backward()
             optimizer.step()
             running_loss += loss.item()
-            if i % 10 == 9:
-                print(running_loss/10)
+            if i % 100 == 99:
+                print(running_loss/100)
                 running_loss = 0.0
                 break
 

@@ -15,6 +15,15 @@ classes = np.asarray(["aeroplane", "bicycle", "bird", "boat", "bottle", "bus", "
                       "person", "pottedplant", "sheep", "sofa", "train", "tvmonitor", "background"])
 classes_num = np.asarray([i for i in range(21)])
 
+'''
+    PascalVocLoader(image_dir, annotation_path, txt_path, threshold, transform)
+        image_dir: JPEGImages path
+        annotation_path: Annotations path
+        txt_path: aeroplane_train.txt
+        threshold: iou threshold
+        transform: transform to images
+'''
+
 
 class PascalVocLoader(Dataset):
 
@@ -95,6 +104,7 @@ class PascalVocLoader(Dataset):
         return image_pres
 
 
+# rescale images
 class Rescale(object):
 
     def __init__(self, output_size):
@@ -123,6 +133,3 @@ class ToTensor(object):
         image = image.transpose([2, 0, 1])
         image = torch.from_numpy(image)
         return [image, label]
-
-
-
