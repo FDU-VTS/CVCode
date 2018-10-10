@@ -14,7 +14,7 @@ import copy
 import os
 import cv2
 
-data_dir = "./data"
+data_dir = "./data_pretrain"
 
 # Models to choose from [resnet, alexnet, vgg, squeezenet, densenet, inception]
 model_name = "vgg"
@@ -50,7 +50,7 @@ def train_model(model, dataloaders, criterion, optimizer, num_epochs=25, is_ince
             running_loss = 0.0
             running_corrects = 0
 
-            # Iterate over data.
+            # Iterate over data_pretrain.
             for inputs, labels in dataloaders[phase]:
                 inputs = inputs.to(device)
                 labels = labels.to(device)

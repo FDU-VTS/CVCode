@@ -4,4 +4,4 @@ __pycache__
 *.DS_Store
 *.gz
 *.xml
-data*
+data
