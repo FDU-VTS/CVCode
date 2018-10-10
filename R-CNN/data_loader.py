@@ -7,11 +7,13 @@ import skimage.io
 from skimage import transform
 import xml.dom.minidom
 import warnings
+import utils
+import selectivesearch
 warnings.filterwarnings('ignore')
 classes = np.asarray(["aeroplane", "bicycle", "bird", "boat", "bottle", "bus", "car",
                       "cat", "chair", "cow", "diningtable", "dog", "horse", "motorbike",
-                      "person", "pottedplant", "sheep", "sofa", "train", "tvmonitor"])
-classes_num = np.asarray([i for i in range(20)])
+                      "person", "pottedplant", "sheep", "sofa", "train", "tvmonitor", "background"])
+classes_num = np.asarray([i for i in range(21)])
 
 
 class PascalVocLoader(Dataset):
@@ -19,10 +21,12 @@ class PascalVocLoader(Dataset):
     def __init__(self, image_dir="./data/VOC2007/JPEGImages/",
                  annotation_path="./data/VOC2007/Annotations/",
                  txt_path="./data/VOC2007/ImageSets/Main/aeroplane_train.txt",
+                 threshold=0.5,
                  transform=None):
         self.image_dir = image_dir
         self.annotation_path = annotation_path
         self.txt_path = txt_path
+        self.threshold = threshold
         self.transform = transform
         self.dataset = self.xml_reader()
 
@@ -41,10 +45,10 @@ class PascalVocLoader(Dataset):
         image_dir = self.image_dir
         annotation_path = self.annotation_path
         image_pres = self.txt_reader(self.txt_path)
-        dataset = []
+        ground_truth = []
+        regions_proposal = []
 
         # get every image in image_path
-
         for image_pre in image_pres:
             image_name = image_pre + ".jpg"
             image_path = image_dir + image_name
@@ -56,6 +60,13 @@ class PascalVocLoader(Dataset):
             object_list = annotation.getElementsByTagName('object')
             image = skimage.io.imread(image_path)
 
+            # selective search
+            img, regions = selectivesearch.selective_search(image)
+            for region in regions:
+                r = region['rect']
+                regions_proposal.append([[r[0], r[1], r[0] + r[2], r[1] + r[3]],
+                                         image[r[1]:r[1]+r[3], r[0]:r[0]+r[2]], 20])
+
             # each object is a [image: label]
             for object in object_list:
                 dom_name = object.getElementsByTagName('name')
@@ -66,8 +77,16 @@ class PascalVocLoader(Dataset):
                 ymax = int(object.getElementsByTagName('ymax')[0].childNodes[0].data)
                 image_seg = image[ymin:ymax, xmin:xmax]
                 image_label = classes_num[classes == object_name][0]
-                dataset.append((image_seg, image_label))
-        return dataset
+                ground_truth.append([image_seg, image_label])
+                for i in range(len(regions_proposal)):
+                    print(i)
+                    iou = utils.get_IoU([xmin, ymin, xmax, ymax], regions_proposal[i][0])
+                    if iou > self.threshold:
+                        regions_proposal[i][2] = image_label
+        ground_truth = np.asarray(ground_truth)
+        regions_proposal = np.asarray(regions_proposal)
+
+        return np.append(ground_truth, regions_proposal[:, 1:], axis=0)
 
     @ staticmethod
     def txt_reader(txt_path):

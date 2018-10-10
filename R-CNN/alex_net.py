@@ -53,9 +53,9 @@ def train():
     train_set = data_loader.PascalVocLoader(transform=transform)
     train_loader = torch.utils.data.DataLoader(train_set, batch_size=4, shuffle=True, num_workers=2)
     # get net | loss function | SGD
-    net = AlexNet(num_classes=20).to(device)
+    net = AlexNet(num_classes=21).to(device)
     net = nn.DataParallel(net, device_ids=[0])
-    criterion = nn.CrossEntropyLoss()
+    criterion = nn.Softmax()
     optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
     # train
     for epoch in range(2):
