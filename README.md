@@ -1,3 +1,18 @@
 ### Introduction
 
-#### It's a repository about algorithm recurrent, almostly basic CV algorithm. 
+#### Deep-Learning
+ - NetMode
+   - AlexNet
+   - SPPNet
+ - R-CNN
+ - Fast-RCNN
+
+#### Graph-Algorithm
+ - Filter
+   - GaussianFilter
+ - GraphBasedImageSegmentation
+ - SIFT
+ - SelectiveSearch
+
+### Machine-Learning
+ - Clustering
