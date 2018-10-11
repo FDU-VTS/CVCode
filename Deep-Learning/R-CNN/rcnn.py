@@ -7,6 +7,9 @@ import data_loader
 import matplotlib.pyplot as plt
 import selectivesearch
 import torch
+import torchvision
+from PIL import Image
+import numpy as np
 
 
 if __name__ == "__main__":
@@ -26,4 +29,5 @@ if __name__ == "__main__":
     output = model(input)
     output = torch.max(output, axis = 1)
     # NMS
+
 

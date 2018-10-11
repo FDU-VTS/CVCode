@@ -44,7 +44,6 @@ class PascalVocLoader(Dataset):
 
     def __getitem__(self, item):
         data = self.dataset[item]
-        print("if transform, time to start")
         if self.transform:
             data = self.transform(data)
         return data

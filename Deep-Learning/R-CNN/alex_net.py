@@ -5,6 +5,7 @@ import torch.nn as nn
 import torchvision.transforms as transforms
 import torch.optim as optim
 import torch.cuda
+import torch.nn.functional as F
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 
@@ -55,7 +56,7 @@ def train():
     # get net | loss function | SGD
     net = AlexNet(num_classes=21).to(device)
     net = nn.DataParallel(net, device_ids=[0, 1, 2])
-    criterion = nn.Softmax()
+    loss_function = nn.NLLLoss()
     optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
     # train
     print("alex_net training......")
@@ -67,7 +68,9 @@ def train():
             labels = labels.to(device)
             optimizer.zero_grad()
             outputs = net(inputs)
-            loss = criterion(outputs, labels)
+            print(outputs)
+            print(labels)
+            loss = loss_function(outputs, labels)
             loss.backward()
             optimizer.step()
             running_loss += loss.item()
