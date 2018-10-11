@@ -5,3 +5,4 @@
  - `selective_search.py`: 图像分割算法
  - `lena.jpg`: 测试图片
  - `__init__.py`: __init__函数
+ - `util.py`: `IOU`计算和`NMS`算法
