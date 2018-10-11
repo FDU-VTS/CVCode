@@ -5,7 +5,6 @@ import torch.nn as nn
 import torchvision.transforms as transforms
 import torch.optim as optim
 import torch.cuda
-import torch.nn.functional as F
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 
@@ -68,16 +67,13 @@ def train():
             labels = labels.to(device)
             optimizer.zero_grad()
             outputs = net(inputs)
-            print(outputs)
-            print(labels)
             loss = loss_function(outputs, labels)
             loss.backward()
             optimizer.step()
             running_loss += loss.item()
-            if i % 100 == 99:
-                print(running_loss/100)
+            if i % 10 == 9:
+                print(running_loss/10)
                 running_loss = 0.0
                 break
 
     return net
-

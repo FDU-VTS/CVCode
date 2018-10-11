@@ -25,13 +25,55 @@ classes_num = np.asarray([i for i in range(21)])
 '''
 
 
+class TestLoader(Dataset):
+
+    def __init__(self, dataset, transform=None):
+        self.transform = transform
+        self.dataset = dataset
+
+    def __len__(self):
+        return len(self.dataset)
+
+    def __getitem__(self, item):
+        data = self.dataset[item]
+        if self.transform:
+            data = self.transform(data)
+        return data
+
+
+class TestRescale(object):
+
+    def __init__(self, output_size):
+        assert isinstance(output_size, (int, tuple))
+        self.output_size = output_size
+
+    def __call__(self, sample):
+        image = sample
+        h, w = image.shape[:2]
+        if isinstance(self.output_size, int):
+            if h > w:
+                new_h, new_w = self.output_size * h / w, self.output_size
+            else:
+                new_h, new_w = self.output_size, self.output_size * w / h
+        else:
+            new_h, new_w = self.output_size
+        new_h, new_w = int(new_h), int(new_w)
+        img = transform.resize(image, (new_h, new_w))
+        return img
+
+
+class TestToTensor(object):
+
+    def __call__(self, sample):
+        image = sample
+        image = image.transpose([2, 0, 1])
+        image = torch.from_numpy(image)
+        return image
+
+
 class PascalVocLoader(Dataset):
 
-    def __init__(self, image_dir="./data/VOC2007/JPEGImages/",
-                 annotation_path="./data/VOC2007/Annotations/",
-                 txt_path="./data/VOC2007/ImageSets/Main/aeroplane_train.txt",
-                 threshold=0.5,
-                 transform=None):
+    def __init__(self, image_dir="./data/VOC2007/JPEGImages/", annotation_path="./data/VOC2007/Annotations/", txt_path="./data/VOC2007/ImageSets/Main/aeroplane_train.txt", threshold=0.5, transform=None):
         self.image_dir = image_dir
         self.annotation_path = annotation_path
         self.txt_path = txt_path
@@ -58,12 +100,10 @@ class PascalVocLoader(Dataset):
         ground_truth = []
         # region_set means all images' regions
         region_set = []
-        i = 0
 
         # get every image in image_path
         for image_pre in image_pres:
-            print("image {0} is read".format(i))
-            i += 1
+            print("image {0} is read".format(image_pre))
 
             image_name = image_pre + ".jpg"
             image_path = image_dir + image_name
