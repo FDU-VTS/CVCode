@@ -58,6 +58,7 @@ def train():
     criterion = nn.Softmax()
     optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
     # train
+    print("alex_net training......")
     for epoch in range(2):
         running_loss = 0.0
         for i, data in enumerate(train_loader, 0):

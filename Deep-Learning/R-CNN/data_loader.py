@@ -44,6 +44,7 @@ class PascalVocLoader(Dataset):
 
     def __getitem__(self, item):
         data = self.dataset[item]
+        print("if transform, time to start")
         if self.transform:
             data = self.transform(data)
         return data
@@ -51,15 +52,20 @@ class PascalVocLoader(Dataset):
     # use xml docs to get image:label
     # dataset = [[image, label], [image, label]]
     def xml_reader(self):
+        print("start to read image data.....")
         image_dir = self.image_dir
         annotation_path = self.annotation_path
         image_pres = self.txt_reader(self.txt_path)
         ground_truth = []
         # region_set means all images' regions
         region_set = []
+        i = 0
 
         # get every image in image_path
         for image_pre in image_pres:
+            print("image {0} is read".format(i))
+            i += 1
+
             image_name = image_pre + ".jpg"
             image_path = image_dir + image_name
             xml_file = annotation_path + image_pre + '.xml'
