@@ -26,3 +26,4 @@ if __name__ == "__main__":
     output = model(input)
     output = torch.max(output, axis = 1)
     # NMS
+

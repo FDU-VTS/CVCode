@@ -1,5 +1,6 @@
 # -*- coding:utf-8 -*-
 
+
 def get_IoU(ground_truth, region):
     # xmin, ymin, xmax, ymax
     x1 = max(ground_truth[0], region[0])
@@ -16,3 +17,6 @@ def get_IoU(ground_truth, region):
     iou = inter_area / outer_area
 
     return iou
+
+def NMS():
+    pass

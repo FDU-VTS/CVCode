@@ -55,7 +55,8 @@ class PascalVocLoader(Dataset):
         annotation_path = self.annotation_path
         image_pres = self.txt_reader(self.txt_path)
         ground_truth = []
-        regions_proposal = []
+        # region_set means all images' regions
+        region_set = []
 
         # get every image in image_path
         for image_pre in image_pres:
@@ -70,10 +71,11 @@ class PascalVocLoader(Dataset):
             image = skimage.io.imread(image_path)
 
             # selective search
+            region_proposal = []
             img, regions = selectivesearch.selective_search(image)
             for region in regions:
                 r = region['rect']
-                regions_proposal.append([[r[0], r[1], r[0] + r[2], r[1] + r[3]],
+                region_proposal.append([[r[0], r[1], r[0] + r[2], r[1] + r[3]],
                                          image[r[1]:r[1]+r[3], r[0]:r[0]+r[2]], 20])
 
             # each object is a [image: label]
@@ -87,15 +89,20 @@ class PascalVocLoader(Dataset):
                 image_seg = image[ymin:ymax, xmin:xmax]
                 image_label = classes_num[classes == object_name][0]
                 ground_truth.append([image_seg, image_label])
-                for i in range(len(regions_proposal)):
-                    print(i)
-                    iou = utils.get_IoU([xmin, ymin, xmax, ymax], regions_proposal[i][0])
+                for i in range(len(region_proposal)):
+                    iou = utils.get_IoU([xmin, ymin, xmax, ymax], region_proposal[i][0])
                     if iou > self.threshold:
-                        regions_proposal[i][2] = image_label
-        ground_truth = np.asarray(ground_truth)
-        regions_proposal = np.asarray(regions_proposal)
+                        region_proposal[i][2] = image_label
+            region_proposal = np.asarray(region_proposal)
+            if region_set == []:
+                region_set = region_proposal
+            else:
+                region_set = np.append(region_set, region_proposal, axis=0)
 
-        return np.append(ground_truth, regions_proposal[:, 1:], axis=0)
+            # select only one image to test
+            break
+        ground_truth = np.asarray(ground_truth)
+        return np.append(ground_truth, region_set[:, 1:], axis=0)
 
     @ staticmethod
     def txt_reader(txt_path):

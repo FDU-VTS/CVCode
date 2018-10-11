@@ -54,7 +54,7 @@ def train():
     train_loader = torch.utils.data.DataLoader(train_set, batch_size=4, shuffle=True, num_workers=2)
     # get net | loss function | SGD
     net = AlexNet(num_classes=21).to(device)
-    net = nn.DataParallel(net, device_ids=[0])
+    net = nn.DataParallel(net, device_ids=[0, 1, 2])
     criterion = nn.Softmax()
     optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
     # train
