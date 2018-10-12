@@ -10,9 +10,15 @@ import data_loader
 import utils
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
+from lxml import etree
 
 
 if __name__ == "__main__":
+
+    root = etree.Element('root')
+    a = etree.Element('a')
+    b = etree.Element('b')
+    root.insert(1, a)
 
     # train model with ground_truth and region_proposals
     model = alex_net.train()
