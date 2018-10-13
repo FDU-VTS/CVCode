@@ -14,19 +14,6 @@ import copy
 import os
 import cv2
 
-data_dir = "./data_pretrain"
-
-# Models to choose from [resnet, alexnet, vgg, squeezenet, densenet, inception]
-model_name = "vgg"
-
-num_classes = 20
-
-batch_size = 8
-
-num_epochs = 15
-
-feature_extract = True
-
 
 def train_model(model, dataloaders, criterion, optimizer, num_epochs=25, is_inception=False):
     since = time.time()
@@ -115,177 +102,124 @@ def set_parameter_requires_grad(model, feature_extracting):
             param.requires_grad = False
 
 
-def initialize_model(model_name, num_classes, feature_extract, use_pretrained=True):
-    # Initialize these variables which will be set in this if statement. Each of these
-    #   variables is model specific.
-    model_ft = None
-    input_size = 0
-
-    if model_name == "resnet":
-        """ Resnet18
-        """
-        model_ft = models.resnet18(pretrained=use_pretrained)
-        set_parameter_requires_grad(model_ft, feature_extract)
-        num_ftrs = model_ft.fc.in_features
-        model_ft.fc = nn.Linear(num_ftrs, num_classes)
-        input_size = 224
-
-    elif model_name == "alexnet":
-        """ Alexnet
-        """
-        model_ft = models.alexnet(pretrained=use_pretrained)
-        set_parameter_requires_grad(model_ft, feature_extract)
-        num_ftrs = model_ft.classifier[6].in_features
-        model_ft.classifier[6] = nn.Linear(num_ftrs, num_classes)
-        input_size = 224
-
-    elif model_name == "vgg":
-        """ VGG11_bn
-        """
-        model_ft = models.vgg11_bn(pretrained=use_pretrained)
-        set_parameter_requires_grad(model_ft, feature_extract)
-        num_ftrs = model_ft.classifier[6].in_features
-        model_ft.classifier[6] = nn.Linear(num_ftrs, num_classes)
-        input_size = 224
-
-    elif model_name == "squeezenet":
-        """ Squeezenet
-        """
-        model_ft = models.squeezenet1_0(pretrained=use_pretrained)
-        set_parameter_requires_grad(model_ft, feature_extract)
-        model_ft.classifier[1] = nn.Conv2d(512, num_classes, kernel_size=(1, 1), stride=(1, 1))
-        model_ft.num_classes = num_classes
-        input_size = 224
-
-    elif model_name == "densenet":
-        """ Densenet
-        """
-        model_ft = models.densenet121(pretrained=use_pretrained)
-        set_parameter_requires_grad(model_ft, feature_extract)
-        num_ftrs = model_ft.classifier.in_features
-        model_ft.classifier = nn.Linear(num_ftrs, num_classes)
-        input_size = 224
-
-    elif model_name == "inception":
-        """ Inception v3 
-        Be careful, expects (299,299) sized images and has auxiliary output
-        """
-        model_ft = models.inception_v3(pretrained=use_pretrained)
-        set_parameter_requires_grad(model_ft, feature_extract)
-        # Handle the auxilary net
-        num_ftrs = model_ft.AuxLogits.fc.in_features
-        model_ft.AuxLogits.fc = nn.Linear(num_ftrs, num_classes)
-        # Handle the primary net
-        num_ftrs = model_ft.fc.in_features
-        model_ft.fc = nn.Linear(num_ftrs, num_classes)
-        input_size = 299
-
-    else:
-        print("Invalid model name, exiting...")
-        exit()
-
+def initialize_model(num_classes, feature_extract, use_pretrained=True):
+    model_ft = models.vgg11_bn(pretrained=use_pretrained)
+    set_parameter_requires_grad(model_ft, feature_extract)
+    num_ftrs = model_ft.classifier[6].in_features
+    model_ft.classifier[6] = nn.Linear(num_ftrs, num_classes)
+    input_size = 224
     return model_ft, input_size
 
+def train():
+    data_dir = "./data_pretrain"
 
-# Initialize the model for this run
-model_ft, input_size = initialize_model(model_name, num_classes, feature_extract, use_pretrained=True)
+    # Models to choose from [resnet, alexnet, vgg, squeezenet, densenet, inception]
 
-# Print the model we just instantiated
-print(model_ft)
+    num_classes = 20
 
-data_transforms = {
-    'train': transforms.Compose([
-        transforms.RandomResizedCrop(input_size),
-        transforms.RandomHorizontalFlip(),
-        transforms.ToTensor(),
-        transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
-    ]),
-    'val': transforms.Compose([
-        transforms.Resize(input_size),
-        transforms.CenterCrop(input_size),
-        transforms.ToTensor(),
-        transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
-    ]),
-}
+    batch_size = 8
 
-print("Initializing Datasets and Dataloaders...")
+    num_epochs = 15
 
-# Create training and validation datasets
-image_datasets = {x: datasets.ImageFolder(os.path.join(data_dir, x), data_transforms[x]) for x in ['train', 'val']}
-# Create training and validation dataloaders
-dataloaders_dict = {
-x: torch.utils.data.DataLoader(image_datasets[x], batch_size=batch_size, shuffle=True, num_workers=4) for x in
-['train', 'val']}
+    feature_extract = True
 
-# Detect if we have a GPU available
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    # Initialize the model for this run
+    model_ft, input_size = initialize_model(num_classes, feature_extract, use_pretrained=True)
 
-# Send the model to GPU
-model_ft = model_ft.to(device)
+    # Print the model we just instantiated
+    print(model_ft)
+    data_transforms = {
+        'train': transforms.Compose([
+            transforms.RandomResizedCrop(input_size),
+            transforms.RandomHorizontalFlip(),
+            transforms.ToTensor(),
+            transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+        ]),
+        'val': transforms.Compose([
+            transforms.Resize(input_size),
+            transforms.CenterCrop(input_size),
+            transforms.ToTensor(),
+            transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+        ]),
+    }
 
-# Gather the parameters to be optimized/updated in this run. If we are
-#  finetuning we will be updating all parameters. However, if we are
-#  doing feature extract method, we will only update the parameters
-#  that we have just initialized, i.e. the parameters with requires_grad
-#  is True.
-params_to_update = model_ft.parameters()
-print("Params to learn:")
-if feature_extract:
-    params_to_update = []
-    for name, param in model_ft.named_parameters():
-        if param.requires_grad == True:
-            params_to_update.append(param)
-            print("\t", name)
-else:
-    for name, param in model_ft.named_parameters():
-        if param.requires_grad == True:
-            print("\t", name)
+    print("Initializing Datasets and Dataloaders...")
 
-# Observe that all parameters are being optimized
-optimizer_ft = optim.SGD(params_to_update, lr=0.001, momentum=0.9)
+    # Create training and validation datasets
+    image_datasets = {x: datasets.ImageFolder(os.path.join(data_dir, x), data_transforms[x]) for x in ['train', 'val']}
+    # Create training and validation dataloaders
+    dataloaders_dict = {
+        x: torch.utils.data.DataLoader(image_datasets[x], batch_size=batch_size, shuffle=True, num_workers=4) for x in
+        ['train', 'val']}
 
-# Setup the loss fxn
-criterion = nn.CrossEntropyLoss()
+    # Detect if we have a GPU available
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-# Train and evaluate
-model_ft, hist = train_model(model_ft, dataloaders_dict, criterion, optimizer_ft, num_epochs=num_epochs,
-                             is_inception=(model_name == "inception"))
+    # Send the model to GPU
+    model_ft = model_ft.to(device)
 
-# Initialize the non-pretrained version of the model used for this run
-scratch_model, _ = initialize_model(model_name, num_classes, feature_extract=False, use_pretrained=False)
-scratch_model = scratch_model.to(device)
-scratch_optimizer = optim.SGD(scratch_model.parameters(), lr=0.001, momentum=0.9)
-scratch_criterion = nn.CrossEntropyLoss()
-_, scratch_hist = train_model(scratch_model, dataloaders_dict, scratch_criterion, scratch_optimizer,
-                              num_epochs=num_epochs, is_inception=(model_name == "inception"))
+    # Gather the parameters to be optimized/updated in this run. If we are
+    #  finetuning we will be updating all parameters. However, if we are
+    #  doing feature extract method, we will only update the parameters
+    #  that we have just initialized, i.e. the parameters with requires_grad
+    #  is True.
+    params_to_update = model_ft.parameters()
+    print("Params to learn:")
+    if feature_extract:
+        params_to_update = []
+        for name, param in model_ft.named_parameters():
+            if param.requires_grad == True:
+                params_to_update.append(param)
+                print("\t", name)
+    else:
+        for name, param in model_ft.named_parameters():
+            if param.requires_grad == True:
+                print("\t", name)
+
+    # Observe that all parameters are being optimized
+    optimizer_ft = optim.SGD(params_to_update, lr=0.001, momentum=0.9)
+
+    # Setup the loss fxn
+    criterion = nn.CrossEntropyLoss()
+
+    # Train and evaluate
+    model_ft, hist = train_model(model_ft, dataloaders_dict, criterion, optimizer_ft, num_epochs=num_epochs,
+                                 is_inception=(model_name == "inception"))
+
+def train_vgg11_with_pretrained(dataloaders_dict, num_classes, batch_size, num_epochs, feature_extract):
 
 
+    # Initialize the model for this run
+    model_ft, input_size = initialize_model(num_classes, feature_extract, use_pretrained=True)
 
+    # Print the model we just instantiated
+    print(model_ft)
 
-def get_regions():
-    # loading  image
-    img = io.imread('UNADJUSTEDNONRAW_thumb_329b.jpg')
+    # Detect if we have a GPU available
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    # perform selective search
-    img_lbl, regions = selectivesearch.selective_search(
-        img, scale=500, sigma=0.9, min_size=10)
+    # Send the model to GPU
+    model_ft = model_ft.to(device)
 
-    print(len(img_lbl))
-    print(np.shape(img))
-    candidates = set()
+    params_to_update = model_ft.parameters()
+    print("Params to learn:")
+    if feature_extract:
+        params_to_update = []
+        for name, param in model_ft.named_parameters():
+            if param.requires_grad == True:
+                params_to_update.append(param)
+                print("\t", name)
+    else:
+        for name, param in model_ft.named_parameters():
+            if param.requires_grad == True:
+                print("\t", name)
 
-    for r in regions:
-        # excluding same rectangle (with different segments)
-        if r['rect'] in candidates:
-            continue
-        # excluding regions smaller than 2000 pixels
-        if r['size'] < 100:
-            continue
-        candidates.add(r['rect'])
+    # Observe that all parameters are being optimized
+    optimizer_ft = optim.SGD(params_to_update, lr=0.001, momentum=0.9)
 
-    # draw rectangles on the original image
+    # Setup the loss fxn
+    criterion = nn.CrossEntropyLoss()
 
-    for i, R  in enumerate(candidates):
-        x, y ,w, h = R
-        nor_img = transform.resize(img[y:y + h, x:x + w, :], (224, 224))
-        io.imsave("./region/"+str(i)+'.jpg', nor_img)
+    # Train and evaluate
+    model_ft, hist = train_model(model_ft, dataloaders_dict, criterion, optimizer_ft, num_epochs=num_epochs,
+                                 is_inception=(model_name == "inception"))
