@@ -14,13 +14,15 @@ import copy
 import os
 import cv2
 
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-def train_model(model, dataloaders, criterion, optimizer, num_epochs=25, is_inception=False):
+def train_model(model, dataloaders, criterion, optimizer, num_epochs=25):
     since = time.time()
 
     val_acc_history = []
 
     best_model_wts = copy.deepcopy(model.state_dict())
+
     best_acc = 0.0
 
     for epoch in range(num_epochs):
@@ -48,19 +50,8 @@ def train_model(model, dataloaders, criterion, optimizer, num_epochs=25, is_ince
                 # forward
                 # track history if only in train
                 with torch.set_grad_enabled(phase == 'train'):
-                    # Get model outputs and calculate loss
-                    # Special case for inception because in training it has an auxiliary output. In train
-                    #   mode we calculate the loss by summing the final output and the auxiliary output
-                    #   but in testing we only consider the final output.
-                    if is_inception and phase == 'train':
-                        # From https://discuss.pytorch.org/t/how-to-optimize-inception-model-with-auxiliary-classifiers/7958
-                        outputs, aux_outputs = model(inputs)
-                        loss1 = criterion(outputs, labels)
-                        loss2 = criterion(aux_outputs, labels)
-                        loss = loss1 + 0.4 * loss2
-                    else:
-                        outputs = model(inputs)
-                        loss = criterion(outputs, labels)
+                    outputs = model(inputs)
+                    loss = criterion(outputs, labels)
 
                     _, preds = torch.max(outputs, 1)
 
@@ -152,9 +143,6 @@ def train():
         x: torch.utils.data.DataLoader(image_datasets[x], batch_size=batch_size, shuffle=True, num_workers=4) for x in
         ['train', 'val']}
 
-    # Detect if we have a GPU available
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
     # Send the model to GPU
     model_ft = model_ft.to(device)
 
@@ -183,8 +171,8 @@ def train():
     criterion = nn.CrossEntropyLoss()
 
     # Train and evaluate
-    model_ft, hist = train_model(model_ft, dataloaders_dict, criterion, optimizer_ft, num_epochs=num_epochs,
-                                 is_inception=(model_name == "inception"))
+    model_ft, hist = train_model(model_ft, dataloaders_dict, criterion, optimizer_ft, num_epochs=num_epochs)
+    torch.save(model_ft.state_dict(), "net_pretrained_params.pkl")
 
 def train_vgg11_with_pretrained(dataloaders_dict, num_classes, batch_size, num_epochs, feature_extract):
 
@@ -221,5 +209,5 @@ def train_vgg11_with_pretrained(dataloaders_dict, num_classes, batch_size, num_e
     criterion = nn.CrossEntropyLoss()
 
     # Train and evaluate
-    model_ft, hist = train_model(model_ft, dataloaders_dict, criterion, optimizer_ft, num_epochs=num_epochs,
-                                 is_inception=(model_name == "inception"))
+    model_ft, hist = train_model(model_ft, dataloaders_dict, criterion, optimizer_ft, num_epochs=num_epochs)
+    torch.save(model_ft.state_dict(), "net_pretrained_params.pkl")
