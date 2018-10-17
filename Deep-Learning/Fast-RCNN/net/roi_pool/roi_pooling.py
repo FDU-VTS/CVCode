@@ -62,4 +62,3 @@ class ROIPooling(torch.nn.Module):
     def forward(self, features, rois):
         # get RoIPoolingFunction callback function
         return RoIPoolingFunction(self.pooled_height, self.pooled_width, self.spatial_scale)(features, rois)
-
