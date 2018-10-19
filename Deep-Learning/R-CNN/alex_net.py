@@ -51,7 +51,7 @@ def train():
     # get train set
     transform = transforms.Compose([data_loader.Rescale((224, 224)), data_loader.ToTensor()])
     train_set = data_loader.PascalVocLoader(transform=transform)
-    train_loader = torch.utils.data.DataLoader(train_set, batch_size=4, shuffle=True, num_workers=2)
+    train_loader = torch.utils.data.DataLoader(train_set, batch_size=1, shuffle=True, num_workers=2)
     # get net | loss function | SGD
     net = AlexNet(num_classes=21).to(device)
     net = nn.DataParallel(net, device_ids=[0, 1, 2])
@@ -67,6 +67,7 @@ def train():
             labels = labels.to(device)
             optimizer.zero_grad()
             outputs = net(inputs)
+            print(outputs, labels)
             loss = loss_function(outputs, labels)
             loss.backward()
             optimizer.step()
