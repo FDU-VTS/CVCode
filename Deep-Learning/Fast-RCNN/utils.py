@@ -6,8 +6,8 @@ def get_IoU(ground_truth, region):
     # xmin, ymin, xmax, ymax
     x1 = max(ground_truth[0], region[0])
     y1 = max(ground_truth[1], region[1])
-    x2 = min(ground_truth[2], region[2])
-    y2 = min(ground_truth[3], region[3])
+    x2 = min(ground_truth[2], region[0] + region[2])
+    y2 = min(ground_truth[3], region[1] + region[3])
 
     if x2 - x1 < 0:
         return 0
