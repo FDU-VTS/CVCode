@@ -2,16 +2,15 @@
 from torch.autograd import Function
 import torch
 import math
-
+DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
 def roi_pooling_forward(pooled_height, pooled_width, spatial_scale, features, rois):
     num_rois, size_rois = rois.size()
     assert features.size(0) == 1
     _, num_channels, data_height, data_width = torch.tensor(features.size()).tolist()
-    argmax = torch.IntTensor(num_rois, num_channels, pooled_height, pooled_width, 2, device="cuda").zero_()
-    output = torch.zeros(num_rois, num_channels, pooled_height, pooled_width, device="cuda")
+    argmax = torch.IntTensor(num_rois, num_channels, pooled_height, pooled_width, 2, device=DEVICE).zero_()
+    output = torch.zeros(num_rois, num_channels, pooled_height, pooled_width, device=DEVICE)
     for roi_index in range(len(rois)):
-        print("roi index is: ", roi_index)
         roi = rois[roi_index]
         # roi positions
         # x_min, y_min, x_max, y_max mean position on feature map
@@ -70,15 +69,12 @@ class ROIPool(Function):
         output, argmax = roi_pooling_forward(self.pooled_height, self.pooled_width,
                                              self.spatial_scale, features, rois)
         self.argmax = argmax
-        print("argmax's size is: ", argmax.size())
 
         return output
 
     def backward(self, grad_output):
-        print("grad_output's size is: ", grad_output.size())
         batch_size, num_channels, data_height, data_width = self.feature_size
-        grad_input = torch.zeros(batch_size, num_channels, data_height, data_width, device="cuda")
-        print("grad_input's size is: ", grad_input.size())
+        grad_input = torch.zeros(batch_size, num_channels, data_height, data_width, device=DEVICE)
         for i in range(self.rois.size(0)):
             for k in range(num_channels):
                 for m in range(self.pooled_height):
