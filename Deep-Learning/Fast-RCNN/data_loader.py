@@ -10,7 +10,6 @@ import warnings
 import utils
 import selectivesearch
 import os
-from lxml import etree, objectify
 warnings.filterwarnings('ignore')
 classes = np.asarray(["aeroplane", "bicycle", "bird", "boat", "bottle", "bus", "car",
                       "cat", "chair", "cow", "diningtable", "dog", "horse", "motorbike",
