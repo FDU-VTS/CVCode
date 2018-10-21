@@ -74,18 +74,17 @@ def load_regions(image_index, number):
 
 class PascalVocDataset(Dataset):
 
-    def __init__(self, number,transform=None):
+    def __init__(self, number):
         self.transform = transform
         self.image_indices = txt_reader(TXT_DIR)
         self.number = number
 
     def __len__(self):
-        return len(self.dataset)
+        return len(self.image_indices)
 
     def __getitem__(self, item):
         image_index = self.image_indices[item]
         image, rois = load_regions(image_index, self.number)
         image = np.transpose(image, [2, 0, 1])
         image = torch.from_numpy(image)
-        rois = torch.tensor(rois)
         return [image, rois]

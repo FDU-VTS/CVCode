@@ -3,15 +3,11 @@ import torch
 import torch.utils.data
 import torch.nn as nn
 import torch.optim as optim
-import skimage.io
 import numpy as np
-import data_loader
 import torchvision.transforms as transforms
-import selectivesearch
-import matplotlib.pyplot as plt
 import warnings
-import utils
 import roi_pool
+import data_loader
 warnings.filterwarnings('ignore')
 classes = np.asarray(["aeroplane", "bicycle", "bird", "boat", "bottle", "bus", "car",
                       "cat", "chair", "cow", "diningtable", "dog", "horse", "motorbike",
@@ -65,65 +61,46 @@ class VGG16(nn.Module):
             nn.Linear(4096, num_classes),
             nn.LogSoftmax(),
         )
+        self.bbox = nn.Sequential(
+            nn.Linear(512 * 7 * 7, 4096),
+            nn.ReLU(inplace=True),
+            nn.Dropout(),
+            nn.Linear(4096, 4096),
+            nn.ReLU(inplace=True),
+            nn.Linear(4096, (num_classes - 1) * 4)
+        )
 
     def forward(self, x, rois=None):
         x = self.features(x)
         print("conv layer ouput: ", x.size())
+        print("ROI pool start...")
         x = self.ROIPool(x, rois)
         print("ROI pool output: ", x.size())
         x = x.view(x.size(0), -1)
-        x = self.classifier(x)
-        print("Linear layer output: ", x.size())
+        classifier_x = self.classifier(x)
+        bbox_x = self.bbox(x)
 
-        return x
+        return classifier_x, bbox_x
 
 
 if __name__ == "__main__":
     # load data
-    image = skimage.io.imread("./data/car.jpg")
-    # ground truth
-    ground_truth = [156, 97, 351, 270]
-    ground_truth_label = "car"
-    ground_truth_number = int(classes_num[classes=="car"])
-    # get regions
-    region_proposal = []
-    rois_labels = []
-    background = []
-    img, regions = selectivesearch.selective_search(image)
-    for region in regions:
-        roi = region['rect']
-        if roi in region_proposal or roi in background:
-            continue
-        iou = utils.get_IoU(ground_truth, roi)
-        if iou > 0.5 and len(region_proposal) < 16:
-            region_proposal.append(roi)
-            rois_labels.append(ground_truth_number)
-        elif iou > 0.1 and len(background) < 48:
-            background.append(roi)
-        if len(region_proposal) is 16 and len(background) is 48:
-            break
-
+    voc_dataset = data_loader.PascalVocDataset(number=64)
+    voc_loader = torch.utils.data.DataLoader(voc_dataset, batch_size=1, shuffle=True, num_workers=2)
     net = VGG16(num_classes=21).to(device)
-    net = nn.DataParallel(net, device_ids=[0, 1, 2])
+    net = nn.DataParallel(net, device_ids=[0, 1, 2, 3])
     loss_function = nn.NLLLoss()
     optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
-    # transfer data to tensor
-    image = image.transpose([2, 0, 1])
-    image = torch.from_numpy(image)
-    image = image.view([1] + list(image.size())).float()
-    rois = region_proposal + background
-    rois_labels += [20 for i in range(len(background))]
-    rois = torch.Tensor(rois)
-    print("rois' size: ", rois.size())
-    output = net(image, rois).to(device)
-    print("output size: ", output.size())
-    print("output's size is : ", output.size())
-    print("labels' size is:", len(rois_labels))
-    print("backward......")
-    optimizer.zero_grad()
-    rois_labels = torch.tensor(rois_labels)
-    loss = loss_function(output, rois_labels)
-    print("loss: ", loss)
-    loss.backward()
-    optimizer.step()
-    print("loss: ", loss.item())
+
+    for image, image_info in iter(voc_loader):
+        rois = [roi[0] for roi in image_info]
+        rois_labels = [roi[1] for roi in image_info]
+        rois_label = torch.LongTensor([label[0] for label in rois_labels])
+        ground_truth = [label[1] for label in rois_labels]
+        image = image.float()
+        rois = torch.FloatTensor(rois)
+        classifier_output, bbox_output = net(image , rois)
+        cls_loss = loss_function(classifier_output, rois_label)
+        cls_loss.backward()
+        print("cls_loss: ", cls_loss)
+        optimizer.step()
