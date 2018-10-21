@@ -84,19 +84,22 @@ class VGG16(nn.Module):
         return classifier_x, bbox_x
 
 
+
 if __name__ == "__main__":
     # load data
-    voc_dataset = data_loader.PascalVocDataset(number=64)
-    voc_loader = torch.utils.data.DataLoader(voc_dataset, batch_size=1, shuffle=True, num_workers=2)
+    print("start to load data......")
+    voc_dataset = data_loader.PascalVocDataset(number=32)
+    voc_loader = torch.utils.data.DataLoader(voc_dataset, batch_size=1, shuffle=True, num_workers=0)
+    print("init net......")
     net = VGG16(num_classes=21).to(device)
-    net = nn.DataParallel(net, device_ids=[0, 1, 2, 3])
+    net = nn.DataParallel(net, device_ids=[0])
     loss_function = nn.NLLLoss()
     optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
-
+    print("start to train net......")
     for image, image_info in iter(voc_loader):
         rois = [roi[0] for roi in image_info]
         rois_labels = [roi[1] for roi in image_info]
-        rois_label = torch.LongTensor([label[0] for label in rois_labels])
+        rois_label = torch.LongTensor([label[0] for label in rois_labels]).to(device)
         ground_truth = [label[1] for label in rois_labels]
         image = image.float().to(device)
         rois = torch.FloatTensor(rois).to(device)

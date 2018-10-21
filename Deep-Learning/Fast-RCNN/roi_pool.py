@@ -8,9 +8,10 @@ def roi_pooling_forward(pooled_height, pooled_width, spatial_scale, features, ro
     num_rois, size_rois = rois.size()
     assert features.size(0) == 1
     _, num_channels, data_height, data_width = torch.tensor(features.size()).tolist()
-    argmax = torch.IntTensor(num_rois, num_channels, pooled_height, pooled_width, 2).zero_()
-    output = torch.zeros(num_rois, num_channels, pooled_height, pooled_width)
+    argmax = torch.IntTensor(num_rois, num_channels, pooled_height, pooled_width, 2, device="cuda").zero_()
+    output = torch.zeros(num_rois, num_channels, pooled_height, pooled_width, device="cuda")
     for roi_index in range(len(rois)):
+        print("roi index is: ", roi_index)
         roi = rois[roi_index]
         # roi positions
         # x_min, y_min, x_max, y_max mean position on feature map
@@ -76,7 +77,7 @@ class ROIPool(Function):
     def backward(self, grad_output):
         print("grad_output's size is: ", grad_output.size())
         batch_size, num_channels, data_height, data_width = self.feature_size
-        grad_input = torch.zeros(batch_size, num_channels, data_height, data_width)
+        grad_input = torch.zeros(batch_size, num_channels, data_height, data_width, device="cuda")
         print("grad_input's size is: ", grad_input.size())
         for i in range(self.rois.size(0)):
             for k in range(num_channels):

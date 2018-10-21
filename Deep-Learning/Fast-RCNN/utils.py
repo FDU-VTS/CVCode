@@ -13,8 +13,8 @@ def get_IoU(ground_truth, region):
         return 0
 
     inter_area = (x2 - x1 + 1) * (y2 - y1 + 1)
-    outer_area = (region[2] - region[0]) * (region[3] - region[1]) \
-                 + (ground_truth[2] - ground_truth[0]) * (ground_truth[3] - ground_truth[1]) - inter_area
+    outer_area = (region[2] - region[0] + 1) * (region[3] - region[1] + 1) \
+                 + (ground_truth[2] - ground_truth[0] + 1) * (ground_truth[3] - ground_truth[1] + 1) - inter_area
     iou = inter_area / outer_area
 
     return iou
