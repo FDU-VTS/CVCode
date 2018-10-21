@@ -97,8 +97,8 @@ if __name__ == "__main__":
         rois_labels = [roi[1] for roi in image_info]
         rois_label = torch.LongTensor([label[0] for label in rois_labels])
         ground_truth = [label[1] for label in rois_labels]
-        image = image.float()
-        rois = torch.FloatTensor(rois)
+        image = image.float().to(device)
+        rois = torch.FloatTensor(rois).to(device)
         classifier_output, bbox_output = net(image , rois)
         cls_loss = loss_function(classifier_output, rois_label)
         cls_loss.backward()
