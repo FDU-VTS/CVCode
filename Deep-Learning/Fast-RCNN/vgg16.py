@@ -70,7 +70,8 @@ class VGG16(nn.Module):
             nn.Linear(4096, (num_classes - 1) * 4)
         )
 
-    def forward(self, x, rois=None):
+    def forward(self, x, rois):
+        print("*********rois**********: ", rois.size())
         x = self.features(x)
         print("conv layer ouput: ", x.size())
         print("ROI pool start...")
@@ -99,6 +100,7 @@ if __name__ == "__main__":
         ground_truth = [label[1] for label in rois_labels]
         image = image.float().to(device)
         rois = torch.FloatTensor(rois).to(device)
+        print("*********rois**********: ", rois.size())
         classifier_output, bbox_output = net(image , rois)
         cls_loss = loss_function(classifier_output, rois_label)
         cls_loss.backward()
