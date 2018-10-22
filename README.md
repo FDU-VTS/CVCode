@@ -4,6 +4,7 @@
  - NetMode
    - AlexNet
    - SPPNet
+   - ROI Pool
  - R-CNN
  - Fast-RCNN
  - Transfer-Learning
