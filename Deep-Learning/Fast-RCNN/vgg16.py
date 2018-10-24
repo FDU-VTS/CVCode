@@ -3,12 +3,17 @@ import torch
 import torch.utils.data
 import torch.nn as nn
 import torch.optim as optim
+<<<<<<< HEAD:Deep-Learning/Fast-RCNN/vgg16.py
+import skimage.io
+=======
+>>>>>>> 33bfc40e934cef7448e12a536b796a1e44e5d553:Deep-Learning/Fast-RCNN/vgg16.py
 import numpy as np
 import torchvision.transforms as transforms
 import warnings
 import roi_pool
 import data_loader
 import utils
+import roi_pool
 warnings.filterwarnings('ignore')
 classes = np.asarray(["aeroplane", "bicycle", "bird", "boat", "bottle", "bus", "car",
                       "cat", "chair", "cow", "diningtable", "dog", "horse", "motorbike",
@@ -53,7 +58,11 @@ class VGG16(nn.Module):
             nn.ReLU(inplace=True),
         )
         self.ROIPool = roi_pool.ROIPool(7, 7, 1/16)
+<<<<<<< HEAD:Deep-Learning/Fast-RCNN/vgg16.py
+        self.classifier = nn.Sequential(
+=======
         self.fc = nn.Sequential(
+>>>>>>> 33bfc40e934cef7448e12a536b796a1e44e5d553:Deep-Learning/Fast-RCNN/vgg16.py
             nn.Linear(512 * 7 * 7, 4096),
             nn.ReLU(inplace=True),
             nn.Dropout(),
@@ -68,7 +77,11 @@ class VGG16(nn.Module):
             nn.Linear(4096, num_classes * 4)
         )
 
+<<<<<<< HEAD:Deep-Learning/Fast-RCNN/vgg16.py
+    def forward(self, x, rois=None):
+=======
     def forward(self, x, rois):
+>>>>>>> 33bfc40e934cef7448e12a536b796a1e44e5d553:Deep-Learning/Fast-RCNN/vgg16.py
         x = self.features(x)
         x = self.ROIPool(x, rois)
         x = x.view(x.size(0), -1)
@@ -78,9 +91,57 @@ class VGG16(nn.Module):
 
         return classifier_x, bbox_x
 
-
 if __name__ == "__main__":
     # load data
+<<<<<<< HEAD:Deep-Learning/Fast-RCNN/vgg16.py
+    image = skimage.io.imread("./data/car.jpg")
+    # ground truth
+    ground_truth = [156, 97, 351, 270]
+    ground_truth_label = "car"
+    ground_truth_number = int(classes_num[classes=="car"])
+    # get regions
+    region_proposal = []
+    rois_labels = []
+    background = []
+    img, regions = selectivesearch.selective_search(image)
+    for region in regions:
+        roi = region['rect']
+        if roi in region_proposal or roi in background:
+            continue
+        iou = utils.get_IoU(ground_truth, roi)
+        if iou > 0.5 and len(region_proposal) < 16:
+            region_proposal.append(roi)
+            rois_labels.append(ground_truth_number)
+        elif iou > 0.1 and len(background) < 48:
+            background.append(roi)
+        if len(region_proposal) is 16 and len(background) is 48:
+            break
+
+    net = VGG16(num_classes=21).to(device)
+    net = nn.DataParallel(net, device_ids=[0, 1, 2])
+    loss_function = nn.NLLLoss()
+    optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
+    # transfer data to tensor
+    image = image.transpose([2, 0, 1])
+    image = torch.from_numpy(image)
+    image = image.view([1] + list(image.size())).float()
+    rois = region_proposal + background
+    rois_labels += [20 for i in range(len(background))]
+    rois = torch.Tensor(rois)
+    print("rois' size: ", rois.size())
+    output = net(image, rois).to(device)
+    print("output size: ", output.size())
+    print("output's size is : ", output.size())
+    print("labels' size is:", len(rois_labels))
+    print("backward......")
+    optimizer.zero_grad()
+    rois_labels = torch.tensor(rois_labels)
+    loss = loss_function(output, rois_labels)
+    print("loss: ", loss)
+    loss.backward()
+    optimizer.step()
+    print("loss: ", loss.item())
+=======
     print("start to load data......")
     voc_dataset = data_loader.PascalVocDataset(number=10)
     voc_loader = torch.utils.data.DataLoader(voc_dataset, batch_size=1, shuffle=True, num_workers=0)
@@ -105,3 +166,4 @@ if __name__ == "__main__":
         print("bbox_loss: ", bbox_loss)
         loss.backward()
         optimizer.step()
+>>>>>>> 33bfc40e934cef7448e12a536b796a1e44e5d553:Deep-Learning/Fast-RCNN/vgg16.py

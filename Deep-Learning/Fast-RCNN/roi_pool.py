@@ -2,14 +2,23 @@
 from torch.autograd import Function
 import torch
 import math
+<<<<<<< HEAD
+
+=======
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
+>>>>>>> 33bfc40e934cef7448e12a536b796a1e44e5d553
 
 def roi_pooling_forward(pooled_height, pooled_width, spatial_scale, features, rois):
     num_rois, size_rois = rois.size()
     assert features.size(0) == 1
     _, num_channels, data_height, data_width = torch.tensor(features.size()).tolist()
+<<<<<<< HEAD
+    argmax = torch.IntTensor(num_rois, num_channels, pooled_height, pooled_width, 2).zero_()
+    output = torch.zeros(num_rois, num_channels, pooled_height, pooled_width)
+=======
     argmax = torch.IntTensor(num_rois, num_channels, pooled_height, pooled_width, 2, device=DEVICE).zero_()
     output = torch.zeros(num_rois, num_channels, pooled_height, pooled_width, device=DEVICE)
+>>>>>>> 33bfc40e934cef7448e12a536b796a1e44e5d553
     for roi_index in range(len(rois)):
         roi = rois[roi_index]
         # roi positions
@@ -69,12 +78,23 @@ class ROIPool(Function):
         output, argmax = roi_pooling_forward(self.pooled_height, self.pooled_width,
                                              self.spatial_scale, features, rois)
         self.argmax = argmax
+<<<<<<< HEAD
+        print("argmax's size is: ", argmax.size())
+=======
+>>>>>>> 33bfc40e934cef7448e12a536b796a1e44e5d553
 
         return output
 
     def backward(self, grad_output):
+<<<<<<< HEAD
+        print("grad_output's size is: ", grad_output.size())
+        batch_size, num_channels, data_height, data_width = self.feature_size
+        grad_input = torch.zeros(batch_size, num_channels, data_height, data_width)
+        print("grad_input's size is: ", grad_input.size())
+=======
         batch_size, num_channels, data_height, data_width = self.feature_size
         grad_input = torch.zeros(batch_size, num_channels, data_height, data_width, device=DEVICE)
+>>>>>>> 33bfc40e934cef7448e12a536b796a1e44e5d553
         for i in range(self.rois.size(0)):
             for k in range(num_channels):
                 for m in range(self.pooled_height):
@@ -84,4 +104,8 @@ class ROIPool(Function):
                             continue
                         grad_input[:, k, x, y] = grad_output[i, k, m, n]
 
+<<<<<<< HEAD
         return grad_input, None
+=======
+        return grad_input, None
+>>>>>>> 33bfc40e934cef7448e12a536b796a1e44e5d553
