@@ -1,6 +1,6 @@
 ## Introduction
 
-#### Deep-Learning
+### Deep-Learning
  - NetMode
    - AlexNet
    - SPPNet
@@ -11,7 +11,7 @@
  - Transfer-Learning
    - VGG16 with VOC2007
 
-#### Graph-Algorithm
+### Graph-Algorithm
  - Filter
    - GaussianFilter
  - GraphBasedImageSegmentation
