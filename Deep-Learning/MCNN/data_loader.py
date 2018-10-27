@@ -34,7 +34,5 @@ for i in range(1, 2):
     image_path = os.path.join(ground_image, "IMG_{0}.jpg".format(i))
     mat = loadmat(mat_path)
     image = skimage.io.imread(image_path)
-    for k, v in mat.items():
-        print(k, v)
-    plt.imshow(image)
+    print(len(mat["image_info"][0][0][0][0][0]))
     plt.show()
