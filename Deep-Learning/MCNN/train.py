@@ -16,28 +16,27 @@ def train():
     print("init net...........")
     net = mcnn.MCNN().to(DEVICE)
     if torch.cuda.is_available():
-        net = nn.DataParallel(net, device_ids=[0, 1, 2])
-    optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
+        net = nn.DataParallel(net, device_ids=[0, 1, 2, 3])
+    optimizer = optim.SGD(net.parameters(), lr=0.0001, momentum=0.9)
     print("start to train net.....")
     sum_loss = 0
     i = 0
-    for input, ground_truth in iter(tech_loader):
+    for epoch in range(20):
+        for input, ground_truth in iter(tech_loader):
 
-        input = input.float().to(DEVICE)
-        ground_truth = ground_truth.float().to(DEVICE)
-        output = net(input)
-        loss = utils.get_loss(output, ground_truth)
-        optimizer.zero_grad()
-        loss.backward()
-        optimizer.step()
+            input = input.float().to(DEVICE)
+            ground_truth = ground_truth.float().to(DEVICE)
+            output = net(input)
+            loss = utils.get_loss(output, ground_truth)
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
 
-        sum_loss += loss
-        i += 1
-        if i % 10 == 9:
-            print("loss: ", sum_loss / 10)
-            if sum_loss < 1e-04:
-                optimizer = optim.SGD(net.parameters(), lr=1e-5, momentum=0.9)
-            sum_loss = 0
+            sum_loss += loss
+            i += 1
+            if i % 50 == 49:
+                print("loss: ", sum_loss / 50)
+                sum_loss = 0
 
     return net
 
