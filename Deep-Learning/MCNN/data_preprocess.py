@@ -64,10 +64,8 @@ def preprocess(patch_number=9, part="A"):
     test_data = os.path.join(dataset_path, "test_data")
     train_images = os.path.join(train_data, "images")
     train_ground_truth = os.path.join(train_data, "ground_truth")
-    test_images = os.path.join(test_data, "images")
-    test_ground_truth = os.path.join(test_data, "ground_truth")
     # preprocessed path
-    preprocessed_train = "./data/preprocessed/trian/"
+    preprocessed_train = "./data/preprocessed/train/"
     preprocessed_train_density = "./data/preprocessed/train_density/"
     if not os.path.exists("./data/preprocessed/"):
         os.mkdir("./data/preprocessed/")
@@ -98,18 +96,22 @@ def preprocess(patch_number=9, part="A"):
         w = float(image.shape[1])
         h_c = int(3 * math.ceil(w / 3))
         w_c = int(3 * math.ceil(h / 3))
-        image = skimage.transform.resize(image, (h_c, w_c))
-        image_points[:, 0] *= w_c / w
-        image_points[:, 1] *= h_c / h
+        image = skimage.transform.resize(image, (h_c // 4, w_c // 4))
+        image_points[:, 0] *= w_c / (4 * w)
+        image_points[:, 1] *= h_c / (4 * h)
 
         image_density = gaussian_kernel(image, image_points)
+
+        image = skimage.transform.resize(image, (h_c, w_c))
         # split an image to 9 patches
         patch_h = int(math.floor(image.shape[0] / 3))
         patch_w = int(math.floor(image.shape[1] / 3))
+        points_h = int(math.floor(image_density.shape[0] / 3))
+        points_w = int(math.floor(image_density.shape[1] / 3))
         for i in range(3):
             for j in range(3):
                 image_partition = image[i * patch_h: (i + 1) * patch_h, j * patch_w: (j + 1) * patch_w]
-                density_partition = image_density[i * patch_h: (i + 1) * patch_h, j * patch_w: (j + 1) * patch_w]
+                density_partition = image_density[i * points_h: (i + 1) * points_h, j * points_w: (j + 1) * points_w]
                 skimage.io.imsave("{preprocessed_train}{index}_{part_num}.jpg".format(preprocessed_train=preprocessed_train,
                                                                                       index=index, part_num=i * 3 + j), image_partition)
                 np.save("{preprocessed_train_density}{index}_{part_num}.npy".format(preprocessed_train_density=preprocessed_train_density,

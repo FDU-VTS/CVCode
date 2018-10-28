@@ -23,7 +23,7 @@ def get_train():
             ground_truth_path = os.path.join(ground_truth, ground_truth_index)
             image = skimage.io.imread(image_path)
             density = np.load(ground_truth_path)
-            image = np.transpose(image_path, [2, 0, 1])
+            image = np.transpose(image.reshape(image.shape[0], image.shape[1], 1), [2, 0, 1])
             image = torch.from_numpy(image)
             density = torch.from_numpy(density)
             result.append([image, density])
