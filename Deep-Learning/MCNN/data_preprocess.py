@@ -96,8 +96,8 @@ def preprocess(patch_number=9, part="A"):
         # expand image size to make it can be divided
         h = float(image.shape[0])
         w = float(image.shape[1])
-        h_c = 3 * math.ceil(w / 3)
-        w_c = 3 * math.ceil(h / 3)
+        h_c = int(3 * math.ceil(w / 3))
+        w_c = int(3 * math.ceil(h / 3))
         image = skimage.transform.resize(image, (h_c, w_c))
         image_points[:, 0] *= w_c / w
         image_points[:, 1] *= h_c / h
