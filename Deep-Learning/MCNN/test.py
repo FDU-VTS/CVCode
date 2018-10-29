@@ -22,20 +22,18 @@ def test():
     net.load_state_dict(torch.load("./model/mcnn.pkl"), strict=False)
     i = 0
     for input, ground_truth in iter(test_loader):
-        
+        print(i)
+        i += 1
         input = input.float().to(DEVICE)
         ground_truth = ground_truth.float().to(DEVICE)
         output = net(input)
         loss, people_number, ground_number = utils.test_loss(output, ground_truth)
+        print(loss, people_number, ground_number)
         result = output[0].cpu()
         result = result.detach().numpy()
         result = np.transpose(result, [1, 2, 0])
-        print(result.shape)
-        skimage.io.imsave("./data/result/result/{0}.jpg".format(i), result)
-        i += 1
-        print("loss: {loss}, people_number: {people_number}, ground_number: {ground_number}".format(loss=loss,
-                                                                                                    people_number=people_number,
-                                                                                                    ground_number=ground_number))
+        result = result.reshape(result.shape[0], result.shape[1])
+        np.save("./data/result/result/{0}.npy".format(i), result)
 
 
 if __name__ == "__main__":

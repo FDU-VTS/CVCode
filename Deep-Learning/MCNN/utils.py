@@ -9,7 +9,7 @@ import torch
 
 def get_loss(output, ground_truth):
     number = len(output)
-    loss_function = nn.MSELoss()
+    loss_function = nn.MSELoss(size_average=False)
     loss = 0.0
     for i in range(number):
         output_density = output[i].view(output.size(2), output.size(3))

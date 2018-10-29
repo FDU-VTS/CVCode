@@ -21,11 +21,11 @@ def train():
     net = mcnn.MCNN().to(DEVICE)
     if torch.cuda.is_available():
         net = nn.DataParallel(net, device_ids=[0, 1, 2, 3])
-    optimizer = optim.SGD(net.parameters(), lr=0.0001)
+    optimizer = optim.SGD(net.parameters(), lr=0.00001, momentum=0.9)
     print("start to train net.....")
     sum_loss = 0
     i = 0
-    for epoch in range(2):
+    for epoch in range(3):
         for input, ground_truth in iter(tech_loader):
 
             input = input.float().to(DEVICE)
@@ -38,8 +38,8 @@ def train():
 
             sum_loss += loss
             i += 1
-            if i % 50 == 49:
-                print("loss: ", sum_loss / 50)
+            if i % 10 == 9:
+                print("loss: ", sum_loss / 10)
                 sum_loss = 0
 
     return net
