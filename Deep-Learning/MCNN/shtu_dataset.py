@@ -10,12 +10,13 @@ import numpy as np
 import torch
 
 
-def get_train():
+def get_data(mode="train"):
+    num_images = 300 if mode=="train" else 182
     # index train_image ground_truth
-    train_path = "./data/preprocessed/train"
-    ground_truth = "./data/preprocessed/train_density"
+    train_path = "./data/preprocessed/{0}".format(mode)
+    ground_truth = "./data/preprocessed/{0}_density".format(mode)
     result = []
-    for i in range(1, 301):
+    for i in range(1, num_images + 1):
         for j in range(9):
             image_index = "{0}_{1}.jpg".format(i, j)
             ground_truth_index = "{0}_{1}.npy".format(i, j)
@@ -33,8 +34,8 @@ def get_train():
 
 class ShanghaiTechDataset(Dataset):
 
-    def __init__(self):
-        self.dataset = get_train()
+    def __init__(self, mode):
+        self.dataset = get_data(mode=mode)
 
     def __getitem__(self, item):
         return self.dataset[item]

@@ -13,7 +13,6 @@ import numpy as np
 import cv2
 import math
 import warnings
-import matplotlib.pyplot as plt
 warnings.filterwarnings("ignore")
 
 
@@ -56,23 +55,22 @@ def gaussian_kernel(image, points):
     return image_density
 
 
-def preprocess(patch_number=9, part="A"):
-    num_images = 300 if part == "A" else 400
+def extract_data(mode="train", patch_number=9, part="A"):
+    num_images = 300 if mode=="train" else 182
     # original path
     dataset_path = "./data/original/part_{0}_final/".format(part)
-    train_data = os.path.join(dataset_path, "train_data")
-    test_data = os.path.join(dataset_path, "test_data")
-    train_images = os.path.join(train_data, "images")
-    train_ground_truth = os.path.join(train_data, "ground_truth")
+    mode_data = os.path.join(dataset_path, "{0}_data".format(mode))
+    mode_images = os.path.join(mode_data, "images")
+    mode_ground_truth = os.path.join(mode_data, "ground_truth")
     # preprocessed path
-    preprocessed_train = "./data/preprocessed/train/"
-    preprocessed_train_density = "./data/preprocessed/train_density/"
+    preprocessed_mode = "./data/preprocessed/{0}/".format(mode)
+    preprocessed_mode_density = "./data/preprocessed/{0}_density/".format(mode)
     if not os.path.exists("./data/preprocessed/"):
         os.mkdir("./data/preprocessed/")
-    if not os.path.exists(preprocessed_train):
-        os.mkdir(preprocessed_train)
-    if not os.path.exists(preprocessed_train_density):
-        os.mkdir(preprocessed_train_density)
+    if not os.path.exists(preprocessed_mode):
+        os.mkdir(preprocessed_mode)
+    if not os.path.exists(preprocessed_mode_density):
+        os.mkdir(preprocessed_mode_density)
 
     # convert images to gray-density for each
     for index in range(1, num_images + 1):
@@ -80,8 +78,8 @@ def preprocess(patch_number=9, part="A"):
         if index % 10 == 9:
             print("{0} images have been processed".format(index + 1))
 
-        image_path = os.path.join(train_images, "IMG_{0}.jpg".format(index))
-        ground_truth_path = os.path.join(train_ground_truth, "GT_IMG_{0}.mat".format(index))
+        image_path = os.path.join(mode_images, "IMG_{0}.jpg".format(index))
+        ground_truth_path = os.path.join(mode_ground_truth, "GT_IMG_{0}.mat".format(index))
 
         image = skimage.io.imread(image_path)
         if image.shape[-1] == 3:
@@ -112,9 +110,10 @@ def preprocess(patch_number=9, part="A"):
             for j in range(3):
                 image_partition = image[i * patch_h: (i + 1) * patch_h, j * patch_w: (j + 1) * patch_w]
                 density_partition = image_density[i * points_h: (i + 1) * points_h, j * points_w: (j + 1) * points_w]
-                skimage.io.imsave("{preprocessed_train}{index}_{part_num}.jpg".format(preprocessed_train=preprocessed_train,
-                                                                                      index=index, part_num=i * 3 + j), image_partition)
-                np.save("{preprocessed_train_density}{index}_{part_num}.npy".format(preprocessed_train_density=preprocessed_train_density,
-                                                                                    index=index, part_num=i * 3 + j), density_partition)
+                skimage.io.imsave("{preprocessed_mode}{index}_{part_num}.jpg".format(preprocessed_mode=preprocessed_mode,
+                                                                                     index=index, part_num=i * 3 + j), image_partition)
+                np.save("{preprocessed_mode_density}{index}_{part_num}.npy".format(preprocessed_mode_density=preprocessed_mode_density,
+                                                                                   index=index, part_num=i * 3 + j), density_partition)
 
-preprocess()
+
+extract_data(mode="test")

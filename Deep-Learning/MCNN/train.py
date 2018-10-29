@@ -1,4 +1,8 @@
 # -*- coding:utf-8 -*-
+# ------------------------
+# written by Songjian Chen
+# 2018-10
+# ------------------------
 import mcnn
 import shtu_dataset
 import torch
@@ -39,6 +43,7 @@ def train():
                 sum_loss = 0
 
     return net
+
 
 if __name__ == "__main__":
     model = train()
