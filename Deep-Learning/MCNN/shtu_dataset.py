@@ -34,7 +34,7 @@ def get_data(mode="train"):
 
 class ShanghaiTechDataset(Dataset):
 
-    def __init__(self, mode):
+    def __init__(self, mode="train"):
         self.dataset = get_data(mode=mode)
 
     def __getitem__(self, item):

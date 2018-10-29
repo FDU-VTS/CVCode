@@ -15,7 +15,7 @@ DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
 def train():
     print("data loading..........")
-    shanghaitech_dataset = shtu_dataset.ShanghaiTechDataset()
+    shanghaitech_dataset = shtu_dataset.ShanghaiTechDataset(mode="train")
     tech_loader = torch.utils.data.DataLoader(shanghaitech_dataset, batch_size=3, num_workers=2)
     print("init net...........")
     net = mcnn.MCNN().to(DEVICE)
