@@ -16,16 +16,16 @@ DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 def train():
     print("data loading..........")
     shanghaitech_dataset = shtu_dataset.ShanghaiTechDataset(mode="train")
-    tech_loader = torch.utils.data.DataLoader(shanghaitech_dataset, batch_size=3, num_workers=2)
+    tech_loader = torch.utils.data.DataLoader(shanghaitech_dataset, batch_size=1, shuffle=True, num_workers=2)
     print("init net...........")
     net = mcnn.MCNN().to(DEVICE)
     if torch.cuda.is_available():
         net = nn.DataParallel(net, device_ids=[0, 1, 2, 3])
-    optimizer = optim.SGD(net.parameters(), lr=0.0001, momentum=0.9)
+    optimizer = optim.SGD(net.parameters(), lr=0.0001)
     print("start to train net.....")
     sum_loss = 0
     i = 0
-    for epoch in range(20):
+    for epoch in range(2):
         for input, ground_truth in iter(tech_loader):
 
             input = input.float().to(DEVICE)
