@@ -13,7 +13,9 @@ import numpy as np
 import cv2
 import math
 import warnings
+import random
 warnings.filterwarnings("ignore")
+N = 9
 
 
 def gaussian_kernel(image, points):
@@ -84,36 +86,51 @@ def extract_data(mode="train", patch_number=9, part="A"):
         image = skimage.io.imread(image_path)
         if image.shape[-1] == 3:
             image = rgb2gray(image)
+
         mat = loadmat(ground_truth_path)
         image_info = mat["image_info"]
-        image_points = image_info[0][0][0][0][0]
+        ann_points = image_info[0][0][0][0][0]
         number = image_info[0][0][0][0][1]
 
         # expand image size to make it can be divided
         h = float(image.shape[0])
         w = float(image.shape[1])
-        h_c = int(3 * math.ceil(w / 3))
-        w_c = int(3 * math.ceil(h / 3))
-        image = skimage.transform.resize(image, (h_c // 4, w_c // 4))
-        image_points[:, 0] *= w_c / (4 * w)
-        image_points[:, 1] *= h_c / (4 * h)
+        wn2 = w / 8
+        hn2 = h / 8
+        wn2 = 8 * math.floor(wn2 / 8)
+        hn2 = 8 * math.floor(hn2 / 8)
 
-        image_density = gaussian_kernel(image, image_points)
+        if w <= 2 * wn2:
+            image = skimage.transform.resize(image, [h, 2 * wn2 + 1])
+            ann_points[:, 0] *= 2 * wn2 / w
 
-        image = skimage.transform.resize(image, (h_c, w_c))
-        # split an image to 9 patches
-        patch_h = int(math.floor(image.shape[0] / 3))
-        patch_w = int(math.floor(image.shape[1] / 3))
-        points_h = int(math.floor(image_density.shape[0] / 3))
-        points_w = int(math.floor(image_density.shape[1] / 3))
-        for i in range(3):
-            for j in range(3):
-                image_partition = image[i * patch_h: (i + 1) * patch_h, j * patch_w: (j + 1) * patch_w]
-                density_partition = image_density[i * points_h: (i + 1) * points_h, j * points_w: (j + 1) * points_w]
-                skimage.io.imsave("{preprocessed_mode}{index}_{part_num}.jpg".format(preprocessed_mode=preprocessed_mode,
-                                                                                     index=index, part_num=i * 3 + j), image_partition)
-                np.save("{preprocessed_mode_density}{index}_{part_num}.npy".format(preprocessed_mode_density=preprocessed_mode_density,
-                                                                                   index=index, part_num=i * 3 + j), density_partition)
+        if h <= 2 * hn2:
+            image = skimage.transform.resize(image, [2 * hn2 + 1, w])
+            ann_points[:, 1] *= 2 * hn2 / h
+
+        h, w = image.shape
+        a_w = wn2 + 1
+        b_w = w - wn2
+        a_h = hn2 + 1
+        b_h = h - hn2
+
+        image_density = gaussian_kernel(image, ann_points)
+
+        for j in range(N):
+
+            x = math.floor((b_w - a_w) * random.random() + a_w)
+            y = math.floor((b_h - a_h) * random.random() + a_h)
+            x1 = x - wn2
+            y1 = y - hn2
+            x2 = x + wn2 - 1
+            y2 = y + hn2 - 1
+
+            image_sample = image[y1:y2, x1:x2]
+            image_density_sample = image_density[y1:y2, x1:x2]
+
+            img_idx = "{0}_{1}".format(index, j)
+            np.save(os.path.join(preprocessed_mode_density, "{0}.npy".format(img_idx)), image_density_sample)
+            skimage.io.imsave(os.path.join(preprocessed_mode, "{0}.jpg".format(img_idx)), image_sample)
 
 
-extract_data(mode="test")
+extract_data(mode="train")

@@ -10,6 +10,8 @@ import torch.utils.data
 import torch.nn as nn
 import torch.optim as optim
 import utils
+import warnings
+warnings.filterwarnings("ignore")
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
 
@@ -21,11 +23,11 @@ def train():
     net = mcnn.MCNN().to(DEVICE)
     if torch.cuda.is_available():
         net = nn.DataParallel(net, device_ids=[0, 1, 2, 3])
-    optimizer = optim.SGD(net.parameters(), lr=0.0001)
+    optimizer = optim.SGD(net.parameters(), lr=0.00001)
     print("start to train net.....")
     sum_loss = 0
     i = 0
-    for epoch in range(2):
+    for epoch in range(5):
         for input, ground_truth in iter(tech_loader):
 
             input = input.float().to(DEVICE)
