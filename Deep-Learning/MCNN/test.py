@@ -26,10 +26,12 @@ def test():
     sum_mae = 0.0
     sum_mse = 0.0
     for input, ground_truth in iter(test_loader):
-        
+        print(i)
+        i += 1
         input = input.float().to(DEVICE)
         ground_truth = ground_truth.float().to(DEVICE)
         output = net(input)
+<<<<<<< HEAD
         mae, mse = utils.test_loss(output, ground_truth)
         sum_mae += mae
         sum_mse += mse
@@ -39,6 +41,15 @@ def test():
             print("mse: ", sum_mse / 50)
             sum_mae = 0.0
             sum_mse = 0.0
+=======
+        loss, people_number, ground_number = utils.test_loss(output, ground_truth)
+        print(loss, people_number, ground_number)
+        result = output[0].cpu()
+        result = result.detach().numpy()
+        result = np.transpose(result, [1, 2, 0])
+        result = result.reshape(result.shape[0], result.shape[1])
+        np.save("./data/result/result/{0}.npy".format(i), result)
+>>>>>>> 1302afd24652a7e144eea15e6cb89ff2764f3a00
 
 
 if __name__ == "__main__":
