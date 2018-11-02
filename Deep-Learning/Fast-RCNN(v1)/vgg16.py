@@ -1,4 +1,8 @@
 # -*- coding: utf-8 -*-
+# ------------------------
+# written by Songjian Chen
+# 2018-10
+# ------------------------
 import torch
 import torch.utils.data
 import torch.nn as nn

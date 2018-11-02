@@ -1,5 +1,8 @@
 # -*- coding:utf-8 -*-
-
+# ------------------------
+# written by Songjian Chen
+# 2018-10
+# ------------------------
 import numpy as np
 import torch
 from torch.utils.data import Dataset

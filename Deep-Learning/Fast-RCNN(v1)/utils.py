@@ -1,7 +1,10 @@
 # -*- coding:utf-8 -*-
+# ------------------------
+# written by Songjian Chen
+# 2018-10
+# ------------------------
 import math
 import torch
-import torch.nn as nn
 
 
 def get_IoU(ground_truth, region):

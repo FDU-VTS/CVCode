@@ -1,4 +1,8 @@
 # -*- coding:utf-8 -*-
+# ------------------------
+# written by Songjian Chen
+# 2018-10
+# ------------------------
 from torch.autograd import Function
 import torch
 import math
