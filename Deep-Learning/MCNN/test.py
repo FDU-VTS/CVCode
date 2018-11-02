@@ -4,12 +4,8 @@
 # 2018-10
 # ------------------------
 
-import mcnn
-import shtu_dataset
+from src import shtu_dataset, utils, mcnn
 import torch.utils.data
-import utils
-import numpy as np
-import skimage.io
 import warnings
 import torch.nn as nn
 warnings.filterwarnings("ignore")

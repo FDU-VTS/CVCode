@@ -3,13 +3,11 @@
 # written by Songjian Chen
 # 2018-10
 # ------------------------
-import mcnn
-import shtu_dataset
+from src import shtu_dataset, utils, mcnn
 import torch
 import torch.utils.data
 import torch.nn as nn
 import torch.optim as optim
-import utils
 import warnings
 warnings.filterwarnings("ignore")
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
@@ -41,8 +39,8 @@ def train():
 
             sum_loss += float(loss)
             i += 1
-            if i % 50 == 49:
-                print("loss: ", sum_loss / 50)
+            if i % 100 == 99:
+                print("loss: ", sum_loss / 100)
                 sum_loss = 0
 
     return net
