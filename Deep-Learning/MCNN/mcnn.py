@@ -45,7 +45,7 @@ class FC(nn.Module):
 
 class MCNN(nn.Module):
 
-    def __init__(self, bn=False):
+    def __init__(self, bn=True):
         super(MCNN, self).__init__()
 
         self.column1 = nn.Sequential(

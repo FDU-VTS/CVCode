@@ -16,7 +16,7 @@ def get_loss(output, ground_truth):
         ground_truth_density = ground_truth[i]
         loss += loss_function(output_density, ground_truth_density)
 
-    return loss / number
+    return loss / (2 * number)
 
 
 def test_loss(output, ground_truth):
@@ -26,8 +26,9 @@ def test_loss(output, ground_truth):
     for i in range(number):
         output_density = output[i].view(output.size(2), output.size(3))
         ground_truth_density = ground_truth[i]
-        diff = output_density - ground_truth_density
-        mae += abs(torch.sum(diff))
-        mse += torch.sum(diff ** 2)
+        print(torch.sum(output_density), torch.sum(ground_truth_density))
+        diff = abs(torch.sum(output_density) - torch.sum(ground_truth_density))
+        mae += diff
+        mse += diff ** 2
 
     return mae / number, mse / number

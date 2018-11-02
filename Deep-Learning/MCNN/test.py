@@ -11,42 +11,36 @@ import utils
 import numpy as np
 import skimage.io
 import warnings
+import torch.nn as nn
 warnings.filterwarnings("ignore")
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
 
 def test():
     print("data loading............")
-    test_data = shtu_dataset.ShanghaiTechDataset(mode="test")
-    test_loader = torch.utils.data.DataLoader(test_data, batch_size=1, num_workers=2)
+    test_data = shtu_dataset.ShanghaiTechTestDataset()
+    test_loader = torch.utils.data.DataLoader(test_data, batch_size=1, shuffle=True)
     print("init net............")
-    net = mcnn.MCNN().to(DEVICE)
+    net = mcnn.MCNN().eval().to(DEVICE)
+    net = nn.DataParallel(net, device_ids=[0, 1, 2, 3])
     net.load_state_dict(torch.load("./model/mcnn.pkl"), strict=False)
     i = 0
     sum_mae = 0.0
     sum_mse = 0.0
+    print("start to predict...........")
     for input, ground_truth in iter(test_loader):
-        print(i)
         i += 1
         input = input.float().to(DEVICE)
         ground_truth = ground_truth.float().to(DEVICE)
         output = net(input)
         mae, mse = utils.test_loss(output, ground_truth)
-        sum_mae += mae
-        sum_mse += mse
+        sum_mae += float(mae)
+        sum_mse += float(mse)
 
-        if i % 50 == 49:
-            print("mae: ", sum_mae / 50)
-            print("mse: ", sum_mse / 50)
+        if i % 60 == 59:
+            print("mae: %f, mse: %f" %(mae / 20, mse / 20))
             sum_mae = 0.0
             sum_mse = 0.0
-        loss, people_number, ground_number = utils.test_loss(output, ground_truth)
-        print(loss, people_number, ground_number)
-        result = output[0].cpu()
-        result = result.detach().numpy()
-        result = np.transpose(result, [1, 2, 0])
-        result = result.reshape(result.shape[0], result.shape[1])
-        np.save("./data/result/result/{0}.npy".format(i), result)
 
 
 if __name__ == "__main__":

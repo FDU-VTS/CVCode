@@ -133,4 +133,37 @@ def extract_data(mode="train", patch_number=9, part="A"):
             skimage.io.imsave(os.path.join(preprocessed_mode, "{0}.jpg".format(img_idx)), image_sample)
 
 
-extract_data(mode="train")
+def extract_test_data(part="A"):
+    num_images = 183 if part == "A" else 317
+    test_data_path = "./data/original/part_{part}_final/test_data/images".format(part=part)
+    test_ground_path = "./data/original/part_{part}_final/test_data/ground_truth".format(part=part)
+    test_density_path = "./data/preprocessed/test_density"
+    print("create directory........")
+    if not os.path.exists(test_density_path):
+        os.mkdir(test_density_path)
+
+    print("begin to preprocess test data........")
+
+    for index in range(1, num_images):
+        if index % 10 == 0:
+            print("{num} images are done".format(num=index))
+        image_path = os.path.join(test_data_path, "IMG_{0}.jpg".format(index))
+        ground_truth_path = os.path.join(test_ground_path, "GT_IMG_{0}.mat".format(index))
+        # load mat and image
+        image = skimage.io.imread(image_path)
+        if image.shape[-1] == 3:
+            image = rgb2gray(image)
+        mat = loadmat(ground_truth_path)
+        image_info = mat["image_info"]
+        # ann_points: points pixels mean people
+        # number: number of people in the image
+        ann_points = image_info[0][0][0][0][0]
+        number = image_info[0][0][0][0][1]
+        h = float(image.shape[0])
+        w = float(image.shape[1])
+        # convert images to density
+        image_density = gaussian_kernel(image, ann_points)
+        np.save(os.path.join(test_density_path, "{0}.npy".format(index)), image_density)
+
+
+# extract_data(mode="train")
