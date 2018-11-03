@@ -19,6 +19,8 @@ def test():
     print("init net............")
     net = mcnn.MCNN().eval().to(DEVICE)
     net = nn.DataParallel(net, device_ids=[0, 1, 2, 3])
+    for param in net.parameters():
+        print(param)
     net.load_state_dict(torch.load("./model/mcnn.pkl"), strict=False)
     i = 0
     sum_mae = 0.0
@@ -29,6 +31,7 @@ def test():
         input = input.float().to(DEVICE)
         ground_truth = ground_truth.float().to(DEVICE)
         output = net(input)
+        print(output, torch.sum(output))
         mae, mse = utils.test_loss(output, ground_truth)
         sum_mae += float(mae)
         sum_mse += float(mse)
@@ -37,6 +40,7 @@ def test():
             print("mae: %f, mse: %f" %(mae / 20, mse / 20))
             sum_mae = 0.0
             sum_mse = 0.0
+        break
 
 
 if __name__ == "__main__":

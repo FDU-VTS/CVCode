@@ -19,19 +19,21 @@ def train():
     tech_loader = torch.utils.data.DataLoader(shanghaitech_dataset, batch_size=1, shuffle=True, num_workers=2)
     print("init net...........")
     net = mcnn.MCNN().train().to(DEVICE)
+    net = utils.weights_normal_init(net, dev=0.01)
     if torch.cuda.is_available():
         net = nn.DataParallel(net, device_ids=[0, 1, 2, 3])
-    optimizer = optim.SGD(net.parameters(), lr=0.00001, momentum=0.9, weight_decay=1e-3)
+    optimizer = optim.Adam(net.parameters(), 0.00001)
     optimizer = nn.DataParallel(optimizer, device_ids=[0, 1, 2, 3])
     print("start to train net.....")
     sum_loss = 0
     i = 0
-    for epoch in range(2000):
+    for epoch in range(2):
         for input, ground_truth in iter(tech_loader):
 
             input = input.float().to(DEVICE)
             ground_truth = ground_truth.float().to(DEVICE)
             output = net(input)
+            print(torch.sum(output), torch.sum(ground_truth))
             loss = utils.get_loss(output, ground_truth)
             optimizer.zero_grad()
             loss.backward()
@@ -39,8 +41,8 @@ def train():
 
             sum_loss += float(loss)
             i += 1
-            if i % 100 == 99:
-                print("loss: ", sum_loss / 100)
+            if i % 10 == 9:
+                print("loss: ", sum_loss / 10)
                 sum_loss = 0
 
     return net

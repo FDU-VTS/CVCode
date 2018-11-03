@@ -10,6 +10,7 @@ import skimage.transform
 from skimage.color import rgb2gray
 import numpy as np
 import torch
+import pandas as pd
 
 
 def get_data(mode="train"):
@@ -17,54 +18,25 @@ def get_data(mode="train"):
     # index train_image ground_truth
     train_path = "./data/preprocessed/{0}".format(mode)
     ground_truth = "./data/preprocessed/{0}_density".format(mode)
+    data_files = [filename for filename in os.listdir(train_path) \
+                 if os.path.isfile(os.path.join(train_path, filename))]
     result = []
-    for i in range(1, num_images + 1):
-        for j in range(9):
-            image_index = "{0}_{1}.jpg".format(i, j)
-            ground_truth_index = "{0}_{1}.npy".format(i, j)
-            image_path = os.path.join(train_path, image_index)
-            ground_truth_path = os.path.join(ground_truth, ground_truth_index)
-            image = skimage.io.imread(image_path)
-            density = np.load(ground_truth_path)
-            # convert image and image density
-            h, w = image.shape
-            new_h = (h // 4) * 4
-            new_w = (w // 4) * 4
-            image = skimage.transform.resize(image, [new_h, new_w])
-            density = skimage.transform.resize(density, [new_h // 4, new_w // 4])
-            density *= (h * w) / (new_h * new_w / 16)
-            image = np.transpose(image.reshape(image.shape[0], image.shape[1], 1), [2, 0, 1])
-            image = torch.from_numpy(image)
-            density = torch.from_numpy(density)
-            result.append([image, density])
+    for fname in data_files:
+        img = skimage.io.imread(os.path.join(train_path, fname)).astype(np.float32)
+        ht = img.shape[0]
+        wd = img.shape[1]
+        ht_1 = (ht // 4) * 4
+        wd_1 = (wd // 4) * 4
+        img = skimage.transform(img, (wd_1, ht_1))
+        den = pd.read_csv(os.path.join(ground_truth, os.path.splitext(fname)[0] + '.csv'),
+                          sep=",", header=None).values
+        den = den.astype(np.float32, copy=False)
+        wd_1 = wd_1 // 4
+        ht_1 = ht_1 // 4
+        den = skimage.transform.resize(den, (wd_1, ht_1))
+        den *= ((wd * ht) // wd_1 * ht_1)
 
-    return result
-
-
-def get_test_data(part="A"):
-    num_images = 182 if part == "A" else 316
-    test_path = "./data/original/part_{part}_final/test_data/images/".format(part=part)
-    ground_truth = "./data/preprocessed/test_density/"
-    result = []
-    for i in range(1, num_images + 1):
-        image_index = "IMG_{index}.jpg".format(index=i)
-        ground_truth_index = "{index}.npy".format(index=i)
-        image_path = os.path.join(test_path, image_index)
-        ground_truth_path = os.path.join(ground_truth, ground_truth_index)
-        image = skimage.io.imread(image_path)
-        density = np.load(ground_truth_path)
-        if image.shape[-1] == 3:
-            image = rgb2gray(image)
-        h, w = image.shape
-        new_h = (h // 4) * 4
-        new_w = (w // 4) * 4
-        image = skimage.transform.resize(image, [new_h, new_w])
-        density = skimage.transform.resize(density, [new_h // 4, new_w // 4])
-        density *= (h * w) / (new_h * new_w / 16)
-        image = np.transpose(image.reshape(image.shape[0], image.shape[1], 1), [2, 0, 1])
-        image = torch.from_numpy(image)
-        density = torch.from_numpy(density)
-        result.append([image, density])
+        result.append([img, den])
 
     return result
 
@@ -80,14 +52,3 @@ class ShanghaiTechDataset(Dataset):
     def __len__(self):
         return len(self.dataset)
 
-
-class ShanghaiTechTestDataset(Dataset):
-
-    def __init__(self, part="A"):
-        self.dataset = get_test_data(part)
-
-    def __getitem__(self, item):
-        return self.dataset[item]
-
-    def __len__(self):
-        return len(self.dataset)

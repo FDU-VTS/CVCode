@@ -87,3 +87,4 @@ class MCNN(nn.Module):
         x = self.merge(x)
 
         return x
+
