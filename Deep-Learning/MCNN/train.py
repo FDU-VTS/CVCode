@@ -6,48 +6,63 @@
 from src import shtu_dataset, utils, mcnn
 import torch
 import torch.utils.data
-import torch.nn as nn
 import torch.optim as optim
 import warnings
+import sys
+import math
 warnings.filterwarnings("ignore")
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
-
+learning_rate = 0.00001
+save_path = "./model/mcnn.pkl"
 
 def train():
-    print("data loading..........")
+    print("train data loading..........")
     shanghaitech_dataset = shtu_dataset.ShanghaiTechDataset(mode="train")
     tech_loader = torch.utils.data.DataLoader(shanghaitech_dataset, batch_size=1, shuffle=True, num_workers=2)
+    print("test data loading............")
+    test_data = shtu_dataset.ShanghaiTechDataset(mode="test")
+    test_loader = torch.utils.data.DataLoader(test_data, batch_size=1, shuffle=False)
     print("init net...........")
     net = mcnn.MCNN().train().to(DEVICE)
     net = utils.weights_normal_init(net, dev=0.01)
-    if torch.cuda.is_available():
-        net = nn.DataParallel(net, device_ids=[0, 1, 2, 3])
-    optimizer = optim.Adam(net.parameters(), 0.00001)
-    optimizer = nn.DataParallel(optimizer, device_ids=[0, 1, 2, 3])
+    optimizer = optim.Adam(net.parameters(), lr=learning_rate)
     print("start to train net.....")
     sum_loss = 0
-    i = 0
-    for epoch in range(2):
+    step = 0
+    min_mae = sys.maxsize
+    for epoch in range(2000):
         for input, ground_truth in iter(tech_loader):
-
             input = input.float().to(DEVICE)
             ground_truth = ground_truth.float().to(DEVICE)
             output = net(input)
-            print(torch.sum(output), torch.sum(ground_truth))
             loss = utils.get_loss(output, ground_truth)
             optimizer.zero_grad()
             loss.backward()
-            optimizer.module.step()
+            optimizer.step()
 
             sum_loss += float(loss)
-            i += 1
-            if i % 10 == 9:
-                print("loss: ", sum_loss / 10)
+            step += 1
+            if step % 500 == 0:
+                print("{0} patches are done, loss: ".format(step), sum_loss / 500)
                 sum_loss = 0
 
-    return net
+        if epoch % 2 == 0:
+            sum_mae = 0.0
+            sum_mse = 0.0
+            for input, ground_truth in iter(test_loader):
+                input = input.float().to(DEVICE)
+                ground_truth = ground_truth.float().to(DEVICE)
+                output = net(input)
+                mae, mse = utils.get_test_loss(output, ground_truth)
+                sum_mae += float(mae)
+                sum_mse += float(mse)
+            if sum_mae / len(test_loader) < min_mae:
+                min_mae = sum_mae / len(test_loader)
+                min_mse = sum_mse / len(test_loader)
+                torch.save(net.state_dict(), "./model/mcnn.pkl")
+            print("best_mae:%.1f, best_mse:%.1f" % (min_mae, math.sqrt(min_mse)))
+        step = 0
 
 
 if __name__ == "__main__":
-    model = train()
-    torch.save(model.state_dict(), "./model/mcnn.pkl")
+    train()

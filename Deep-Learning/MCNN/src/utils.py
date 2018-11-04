@@ -5,34 +5,29 @@
 # ------------------------
 import torch.nn as nn
 import torch
+import numpy as np
 
 
 def get_loss(output, ground_truth):
-    number = len(output)
+
     loss_function = nn.MSELoss()
-    loss = 0.0
-    for i in range(number):
-        output_density = output[i].view(output.size(2), output.size(3))
-        ground_truth_density = ground_truth[i]
-        loss += loss_function(output_density, ground_truth_density)
+    output_density = output[0].view(output.size(2), output.size(3))
+    ground_truth_density = ground_truth[0]
+    loss = loss_function(output_density, ground_truth_density)
 
-    return loss / (2 * number)
+    return loss / 2
 
 
-def test_loss(output, ground_truth):
-    number = len(output)
-    mae = 0
-    mse = 0
-    for i in range(number):
-        output_density = output[i].view(output.size(2), output.size(3))
-        ground_truth_density = ground_truth[i]
-        print(torch.sum(output_density), torch.sum(ground_truth_density))
-        diff = abs(torch.sum(output_density) - torch.sum(ground_truth_density))
-        mae += diff
-        mse += diff ** 2
+def get_test_loss(output, ground_truth):
 
-    return mae / number, torch.sqrt(mse / number)
+    output_density = output[0].view(output.size(2), output.size(3))
+    ground_truth_density = ground_truth[0]
+    sum_output = torch.sum(output_density)
+    sum_gt = torch.sum(ground_truth_density)
+    mae = abs(sum_output - sum_gt)
+    mse = (sum_output - sum_gt) * (sum_output - sum_gt)
 
+    return mae, mse
 
 def weights_normal_init(model, dev=0.01):
     if isinstance(model, list):
