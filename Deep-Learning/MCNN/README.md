@@ -2,7 +2,7 @@
 
  - `mcnn`: network
  - `shtu_dataset`: get ShangHaiTechDataset
- - `utils`: loss function
+ - `utils`: loss function and parameters init
  - `data_preprocess`: preprocess data
  - `train`: train model
  - `data`: dataset

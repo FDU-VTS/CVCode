@@ -16,15 +16,13 @@ DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 def test():
     print("data loading............")
     test_data = shtu_dataset.ShanghaiTechDataset(mode="test")
-    test_loader = torch.utils.data.DataLoader(test_data, batch_size=1, shuffle=False)
+    test_loader = torch.utils.data.DataLoader(test_data, batch_size=1, shuffle=False, num_workers=8)
     print("init net............")
     net = mcnn.MCNN().eval().to(DEVICE)
     net.load_state_dict(torch.load("./model/mcnn.pkl"), strict=False)
-    i = 0
+    print("start to predict...........")
     sum_mae = 0.0
     sum_mse = 0.0
-    print("start to predict...........")
-
     for input, ground_truth in iter(test_loader):
         input = input.float().to(DEVICE)
         ground_truth = ground_truth.float().to(DEVICE)
@@ -32,11 +30,7 @@ def test():
         mae, mse = utils.get_test_loss(output, ground_truth)
         sum_mae += float(mae)
         sum_mse += float(mse)
-        i += 1
-        if i % 100 == 0:
-            print("mae:%.1f, mse:%.1f" % (sum_mae / 100, math.sqrt(sum_mse / 100)))
-            sum_mae = 0.0
-            sum_mse = 0.0
+    print("best_mae:%.1f, best_mse:%.1f" % (sum_mae / len(test_loader), math.sqrt(sum_mse / len(test_loader))))
 
 
 if __name__ == "__main__":
