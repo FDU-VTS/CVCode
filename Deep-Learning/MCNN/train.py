@@ -36,7 +36,7 @@ def train():
     min_mae = sys.maxsize
     # for each 2 epochs in 2000 get and model to test
     # and keep the best one
-    for epoch in range(2000):
+    for epoch in range(2):
         for input, ground_truth in iter(tech_loader):
             input = input.float().to(DEVICE)
             ground_truth = ground_truth.float().to(DEVICE)
@@ -74,7 +74,7 @@ def train():
         np.save("./model/result.npy")
     except IOError:
         os.mkdir("./model")
-        np.save("./model/result.npy")
+        np.save("./model/result.npy", result)
 
 
 if __name__ == "__main__":
