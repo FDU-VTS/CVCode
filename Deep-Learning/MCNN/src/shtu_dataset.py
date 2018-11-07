@@ -9,15 +9,14 @@ import skimage.io
 import skimage.transform
 from skimage.color import rgb2gray
 import numpy as np
-import pandas as pd
 
 
 def get_data(mode="train"):
     # index train_image ground_truth
     data_path = "./data/preprocessed/{0}".format(mode) \
-        if mode == "train" else "./data/original/part_A_final/test_data/images"
+        if mode == "train" else "./data/original/part_A_final/test_data/images/"
     ground_truth = "./data/preprocessed/{0}_density".format(mode) \
-        if mode == "train" else "./data/original/part_A_final/test_data/ground_truth_csv"
+        if mode == "train" else "./data/preprocessed/test_density/"
     data_files = [filename for filename in os.listdir(data_path) \
                  if os.path.isfile(os.path.join(data_path, filename))]
     result = []
@@ -36,9 +35,7 @@ def get_data(mode="train"):
         img = np.reshape(img, (wd_1, ht_1, 1))
         img = np.transpose(img, (2, 0, 1))
         # load densities
-        den = pd.read_csv(os.path.join(ground_truth, os.path.splitext(fname)[0] + '.csv'),
-                          sep=",", header=None).values
-        den = den.astype(np.float32, copy=False)
+        den = np.load(os.path.join(ground_truth, os.path.splitext(fname)[0] + '.npy')).astype(np.float32)
         ht_1 = ht_1 // 4
         wd_1 = wd_1 // 4
         den = skimage.transform.resize(den, (wd_1, ht_1))
