@@ -1,10 +1,6 @@
 ## Introduction
 
 ### Deep-Learning
- - NetMode
-   - AlexNet
-   - SPPNet
-   - ROI Pool
  - R-CNN
  - Fast-RCNN
    - version: chensongjian
