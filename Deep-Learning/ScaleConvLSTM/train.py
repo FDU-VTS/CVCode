@@ -12,14 +12,16 @@ from ScaleConvLSTM import ScaleConvLSTM, set_parameter_requires_grad
 import math
 import copy
 import time
+# from tensorboardX import SummaryWriter
 
 def main():
+    # writer = SummaryWriter('tensorboard.log')
     num_epochs = 1000
     img_path = "./mall_dataset/frames/"
     point_path = './mall_dataset/mall_gt.mat'
     dataset = MallDataset(img_path, point_path)
     dataset_test = MallDatasetTest(img_path, point_path)
-    dataloader= torch.utils.data.DataLoader(dataset, batch_size=1, shuffle=True, num_workers=8)
+    dataloader= torch.utils.data.DataLoader(dataset, batch_size=1, shuffle=True, num_workers=16)
     dataloader_test = torch.utils.data.DataLoader(dataset_test, batch_size=1, shuffle=False, num_workers=8)
     # model = ScaleConvLSTM(input_channels=1, hidden_channels=[128, 64, 64, 32, 32], kernel_size=[1, 3, 5, 7], step=5, effective_step=[4])
 
@@ -27,7 +29,7 @@ def main():
     model = ScaleConvLSTM(input_channels=1, hidden_channels=[8, 1], kernel_size=[1, 3, 5, 7], step=5, effective_step=[0, 1, 2, 3, 4]).to(device)
 
     model = model.double()
-
+    model.load_state_dict(torch.load('4.940233818779275e-07backup_model_wts.pkl'))
     # model = nn.DataParallel(model, device_ids=(0, 1, 2, 3))
 
     #set_parameter_requires_grad(model, device)
@@ -46,6 +48,7 @@ def main():
     L1loss = nn.L1Loss()
     MAE_best = 100000000000000000
     best_model_wts = copy.deepcopy(model.state_dict())
+    lossoutput = 0
     for epoch in range(num_epochs):
         print('Epoch {}/{}'.format(epoch, num_epochs - 1))
         print('-' * 10)
@@ -65,6 +68,9 @@ def main():
                     step_time = time.time()
                     print("Epoch {} Train Step {}: ".format(epoch, step))
                     step+=1
+                    if step % 20 == 0:
+                        backup_model_wts = copy.deepcopy(model.state_dict())
+                        torch.save(backup_model_wts, str(lossoutput)+'backup_model_wts.pkl')
                     # inputs = inputs.to(device)
                     # zero the parameter gradients
                     optimizer.zero_grad()
@@ -86,6 +92,8 @@ def main():
                             # print(outputs.size())
                             loss = MSEloss(outputs_list, ground_truth)
                             print("Loss: ", loss.item())
+                            # writer.add_scalar('data/y', loss.item(), step)
+                            lossoutput = loss.item()
 
                         # backward + optimize only if in training phase
 
@@ -142,7 +150,7 @@ def main():
             # statistics
             # running_loss += loss.item() * inputs.size(0)
 
-            epoch_loss = running_loss / len(dataset.dataset)
+            epoch_loss = running_loss / len(dataset.__len__())
 
             print('{} Loss: {:.4f} '.format(phase, epoch_loss))
 

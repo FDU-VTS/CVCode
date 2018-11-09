@@ -62,15 +62,16 @@ class MallDataset(Dataset):
 
     def __len__(self):
         # print("len", self.point.shape[0]-39)
-        return self.point.shape[0]-4
+        return int((self.point.shape[0]+1)/5)
+        # return 60
 
     def __getitem__(self, idx):
         image_list = []
         density_list = []
         for i in range(1, 6):
-            image = io.imread(self.img_path + 'seq_00' + str(idx+i).zfill(4) + '.jpg')
+            image = io.imread(self.img_path + 'seq_00' + str(idx*5+i).zfill(4) + '.jpg')
             gray = color.rgb2gray(image)
-            density = gaussian_kernel(gray, self.point[idx+i]['loc'][0][0])
+            density = gaussian_kernel(gray, self.point[idx*5+i]['loc'][0][0])
             image_list.append(gray)
             density_list.append(density)
         # print("11", len(image_list))

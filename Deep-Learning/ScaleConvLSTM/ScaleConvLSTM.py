@@ -23,6 +23,8 @@ class ConvScale(nn.Module):
         self.conv4 = nn.Conv2d(self.hidden, self.output_channels, kernel_size[3], 1, int((kernel_size[3] - 1) / 2), bias=bias)
         self.conv_result = nn.Conv2d(4, 1, 1, stride=1, padding=0, bias=bias)
 
+        
+
     def forward(self, input):
         # input.double()finish ci
         # print("forward size", input.dtype)
@@ -33,8 +35,8 @@ class ConvScale(nn.Module):
             output3 = self.conv3(input)
             output4 = self.conv4(input)
             if self.output_channels == 1:
-                return self.conv_result(torch.cat([output1, output2, output3, output4], -3))
-            return torch.cat([output1, output2, output3, output4], -3)
+                return nn.ReLU()(self.conv_result(torch.cat([output1, output2, output3, output4], -3)))
+            return nn.ReLU()(torch.cat([output1, output2, output3, output4], -3))
 
         # print("finish step 1")
         output2 = self.conv2_1(input)
@@ -46,8 +48,8 @@ class ConvScale(nn.Module):
         output4 = self.conv4(output4)
         # print("finish ConvScale")
         if self.output_channels == 1:
-            return self.conv_result(torch.cat([output1, output2, output3, output4], -3))
-        return torch.cat([output1, output2, output3, output4], -3)
+            return nn.ReLU()(self.conv_result(torch.cat([output1, output2, output3, output4], -3)))
+        return nn.ReLU()(torch.cat([output1, output2, output3, output4], -3))
 
 
 class ScaleConvLSTMCell(nn.Module):
