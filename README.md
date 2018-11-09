@@ -7,6 +7,7 @@
    - version: liwenxi
  - MCNN(Crowd-Count via Multi-Column Convolutional Neural Network)
  - CSRNet
+ - SANet
  - ScaleConvLSTM
  - Transfer-Learning
    - VGG16 with VOC2007
