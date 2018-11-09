@@ -97,6 +97,7 @@ class SANet(nn.Module):
             nn.ReLU(inplace=True),
 
             nn.Conv2d(16, 1, 1, stride=1, padding=int((1 - 1) / 2), bias=True),
+            nn.ReLU(inplace=True),
         )
 
     def forward(self, input):
