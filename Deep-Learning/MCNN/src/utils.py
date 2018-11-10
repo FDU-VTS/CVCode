@@ -29,6 +29,7 @@ def get_test_loss(output, ground_truth):
 
     return mae, mse
 
+
 def weights_normal_init(model, dev=0.01):
     if isinstance(model, list):
         for m in model:
@@ -43,3 +44,4 @@ def weights_normal_init(model, dev=0.01):
                 m.weight.data.normal_(0.0, dev)
 
     return model
+

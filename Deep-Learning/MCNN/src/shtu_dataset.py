@@ -11,7 +11,7 @@ from skimage.color import rgb2gray
 import numpy as np
 
 
-def get_data(mode="train"):
+def get_data(mode="train", zoom_size=4):
     # index train_image ground_truth
     data_path = "./data/preprocessed/{0}".format(mode) \
         if mode == "train" else "./data/original/part_A_final/test_data/images/"
@@ -29,15 +29,15 @@ def get_data(mode="train"):
             img = rgb2gray(img)
         ht = img.shape[0]
         wd = img.shape[1]
-        ht_1 = (ht // 4) * 4
-        wd_1 = (wd // 4) * 4
+        ht_1 = (ht // 8) * 8
+        wd_1 = (wd // 8) * 8
         img = skimage.transform.resize(img, (wd_1, ht_1))
         img = np.reshape(img, (wd_1, ht_1, 1))
         img = np.transpose(img, (2, 0, 1))
         # load densities
         den = np.load(os.path.join(ground_truth, os.path.splitext(fname)[0] + '.npy')).astype(np.float32)
-        ht_1 = ht_1 // 4
-        wd_1 = wd_1 // 4
+        ht_1 = ht_1 // zoom_size
+        wd_1 = wd_1 // zoom_size
         den = skimage.transform.resize(den, (wd_1, ht_1))
         den *= ((wd * ht) // (wd_1 * ht_1))
         index += 1
@@ -51,8 +51,9 @@ def get_data(mode="train"):
 
 class ShanghaiTechDataset(Dataset):
 
-    def __init__(self, mode="train"):
-        self.dataset = get_data(mode=mode)
+    def __init__(self, mode="train", zoom_size=4):
+        self.zoom_size = zoom_size
+        self.dataset = get_data(mode=mode, zoom_size=zoom_size)
 
     def __getitem__(self, item):
         return self.dataset[item]
