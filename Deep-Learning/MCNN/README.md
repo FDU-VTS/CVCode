@@ -1,9 +1,11 @@
 # implement of Single-Image Crowd Counting via Multi-Column Convolutional Neural Network
-
- - `mcnn`: network
- - `shtu_dataset`: get ShangHaiTechDataset
- - `utils`: loss function and parameters init
- - `data_preprocess`: preprocess data
+ - `src`: source files
+     - `mcnn`: MCNN
+     - `csr_net`: CSRNet
+     - `sa_net`: SANet
+     - `shtu_dataset`: get ShangHaiTechDataset
+     - `utils`: loss function and parameters init
+     - `data_preprocess`: preprocess data
  - `train`: train model
  - `data`: dataset
  - `model`: model saved there
