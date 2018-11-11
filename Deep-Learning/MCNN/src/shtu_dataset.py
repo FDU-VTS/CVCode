@@ -51,12 +51,16 @@ def get_data(mode="train", zoom_size=4):
 
 class ShanghaiTechDataset(Dataset):
 
-    def __init__(self, mode="train", zoom_size=4):
+    def __init__(self, mode="train", zoom_size=4, transform=None):
         self.zoom_size = zoom_size
         self.dataset = get_data(mode=mode, zoom_size=zoom_size)
+        self.transform = transform
 
     def __getitem__(self, item):
-        return self.dataset[item]
+        img, den = self.dataset[item]
+        if self.transform is not None:
+            img = self.transform(img)
+        return img, den
 
     def __len__(self):
         return len(self.dataset)
