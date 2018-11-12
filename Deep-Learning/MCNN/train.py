@@ -5,7 +5,7 @@
 # ------------------------
 # csr_net: 121.7, 177.4
 # mcnn: 141.1, 213.2
-from src import shtu_dataset, utils, mcnn, csr_net, sa_net
+from src import shtu_dataset, utils, mcnn, csr_net, sa_net, tdf_net
 import torch
 import torch.utils.data
 import torch.optim as optim
@@ -18,9 +18,15 @@ warnings.filterwarnings("ignore")
 DEVICE = "cuda:1" if torch.cuda.is_available() else "cpu"
 learning_rate = 0.00001
 save_path = "./model/mcnn.pkl"
+models = {
+    'mcnn': utils.weights_normal_init(mcnn.MCNN(), dev=0.01),
+    'csr_net': csr_net.CSRNet(),
+    'sa_net': sa_net.SANet(input_channels=1, kernel_size=[1, 3, 5, 7], bias=True),
+    'tdf_net': tdf_net.TDFNet()
+}
 
 
-def train(zoom_size=4, model="mcnn"):
+def train(zoom_size=4, model="mcnn", dataset="shtu_dataset"):
     print("train data loading..........")
     shanghaitech_dataset = shtu_dataset.ShanghaiTechDataset(mode="train", zoom_size=zoom_size)
     tech_loader = torch.utils.data.DataLoader(shanghaitech_dataset, batch_size=1, shuffle=True, num_workers=8)
@@ -28,13 +34,7 @@ def train(zoom_size=4, model="mcnn"):
     test_data = shtu_dataset.ShanghaiTechDataset(mode="test")
     test_loader = torch.utils.data.DataLoader(test_data, batch_size=1, shuffle=False)
     print("init net...........")
-    if model == "mcnn":
-        net = mcnn.MCNN()
-        net = utils.weights_normal_init(net, dev=0.01)
-    elif model == "csr_net":
-        net = csr_net.CSRNet()
-    elif model == "sa_net":
-        net = sa_net.SANet(input_channels=1, kernel_size=[1, 3, 5, 7], bias=True)
+    net = models[model]
     net = net.train().to(DEVICE)
     print("init optimizer..........")
     optimizer = optim.Adam(filter(lambda p:p.requires_grad, net.parameters()), lr=learning_rate)
@@ -42,6 +42,7 @@ def train(zoom_size=4, model="mcnn"):
     sum_loss = 0
     step = 0
     result = []
+    epoch_index = -1
     min_mae = sys.maxsize
     # for each 2 epochs in 2000 get and model to test
     # and keep the best one
@@ -75,15 +76,17 @@ def train(zoom_size=4, model="mcnn"):
                 min_mae = sum_mae / len(test_loader)
                 min_mse = sum_mse / len(test_loader)
                 result.append([min_mae, math.sqrt(min_mse)])
-                # torch.save(net.state_dict(), "./model/mcnn-11-11.pkl")
+                torch.save(net.state_dict(), "./model/tdf_net.pkl")
             print("best_mae:%.1f, best_mse:%.1f" % (min_mae, math.sqrt(min_mse)))
+            epoch_index += 2
+            print("{0} epoches / 2000 epoches are done".format(epoch_index))
         step = 0
     result = np.asarray(result)
     try:
-        np.save("./model/mcnn-bn.npy", result)
+        np.save("./model/tdf_net.npy", result)
     except IOError:
         os.mkdir("./model")
-        np.save("./model/mcnn-bn.npy", result)
+        np.save("./model/tdf_net.npy", result)
     print("save successful!")
 
 

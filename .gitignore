@@ -7,3 +7,5 @@ __pycache__
 data
 *.pkl
 alex_model.pkl
+*data
+mall_dataset
