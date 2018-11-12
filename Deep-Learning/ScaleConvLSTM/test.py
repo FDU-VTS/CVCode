@@ -100,7 +100,7 @@ def main():
         # statistics
         # running_loss += loss.item() * inputs.size(0)
 
-        print("This Epoch used" + time.time()-start_time)
+        print("This Epoch used", time.time()-start_time)
         print()
 
 

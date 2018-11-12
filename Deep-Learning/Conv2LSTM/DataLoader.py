@@ -62,7 +62,7 @@ class MallDataset(Dataset):
 
     def __len__(self):
         # print("len", self.point.shape[0]-39)
-        return int((self.point.shape[0]-4))
+        return int((self.point.shape[0])-4)
         # return 60
 
     def __getitem__(self, idx):
@@ -72,17 +72,21 @@ class MallDataset(Dataset):
             image = io.imread(self.img_path + 'seq_00' + str(idx+i+1).zfill(4) + '.jpg')
             gray = color.rgb2gray(image)
             density = gaussian_kernel(gray, self.point[idx+i]['loc'][0][0])
+            # print("haha", density.shape)
+            density = cv2.resize(density, (80, 60))
+            # print("heihie", density.shape)
             image_list.append(gray)
             density_list.append(density)
         # print("11", len(image_list))
-        image_list = torch.tensor(image_list, dtype = torch.double)
-        density_list = torch.tensor(density_list, dtype = torch.double)
+        image_list = torch.tensor(image_list, dtype = torch.float)
+        density_list = torch.tensor(density_list, dtype = torch.float)
         image_list = torch.unsqueeze(image_list, 1)
-        density_list = torch.unsqueeze(density_list, 1)
+        # density_list = torch.unsqueeze(density_list, 1)
         # print("________")
         # print(image_list.size())
         # print(density_list.size())
         # print("________")
+        # print("density_list", density_list.size())
         return image_list, density_list
 
 class MallDatasetTest(Dataset):
@@ -102,12 +106,13 @@ class MallDatasetTest(Dataset):
         for i in range(0, 5):
             image = io.imread(self.img_path + 'seq_00' + str(idx+i+1).zfill(4) + '.jpg')
             gray = color.rgb2gray(image)
-            count = self.count[idx+i]
+            count = self.count[idx+i][0]
+            # print("count",count)
             image_list.append(gray)
             count_list.append(count)
         # print("11", len(image_list))
-        image_list = torch.tensor(image_list, dtype = torch.double)
-        count_list = torch.tensor(count_list, dtype = torch.double)
+        image_list = torch.tensor(image_list, dtype = torch.float)
+        count_list = torch.tensor(count_list, dtype = torch.float)
         image_list = torch.unsqueeze(image_list, 1)
         # count_list = torch.unsqueeze(density_list, 1)
         return image_list, count_list

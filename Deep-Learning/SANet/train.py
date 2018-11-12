@@ -16,21 +16,21 @@ import time
 
 def main():
     # writer = SummaryWriter('tensorboard.log')
-    num_epochs = 100
+    num_epochs = 1000
     img_path = "./mall_dataset/frames/"
     point_path = './mall_dataset/mall_gt.mat'
     dataset = MallDataset(img_path, point_path)
     dataset_test = MallDatasetTest(img_path, point_path)
-    dataloader= torch.utils.data.DataLoader(dataset, batch_size=4, shuffle=True, num_workers=16)
-    # dataloader_test = torch.utils.data.DataLoader(dataset_test, batch_size=1, shuffle=False, num_workers=8)
+    dataloader= torch.utils.data.DataLoader(dataset, batch_size=6, shuffle=True, num_workers=16)
+    dataloader_test = torch.utils.data.DataLoader(dataset_test, batch_size=5, shuffle=False, num_workers=16)
     # model = ScaleConvLSTM(input_channels=1, hidden_channels=[128, 64, 64, 32, 32], kernel_size=[1, 3, 5, 7], step=5, effective_step=[4])
 
-    device = torch.device("cuda:3" if torch.cuda.is_available() else "cpu")
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = SANet(input_channels=1, kernel_size=[1, 3, 5, 7], bias=True).to(device)
 
     model = model.double()
-    # model.load_state_dict(torch.load('4.940233818779275e-07backup_model_wts.pkl'))
-    # model = nn.DataParallel(model, device_ids=(3))
+    model.load_state_dict(torch.load('INMAE12325.399114746237MSE441018.38155946246best_model_wts.pkl'))
+    model = nn.DataParallel(model, device_ids=(0, 1))
 
     #set_parameter_requires_grad(model, device)
     # print("Params to learn:")
@@ -42,11 +42,11 @@ def main():
             # print("\t", param.dtype)
 
     model = model.to(device)
-    optimizer = optim.Adam(params_to_update, lr=0.001)
+    optimizer = optim.Adam(model.parameters(), lr=0.01)
 
     MSEloss = nn.MSELoss()
     L1loss = nn.L1Loss()
-    MAE_best = 100000000000000000
+    MAE_best = 12463.0000
     best_model_wts = copy.deepcopy(model.state_dict())
     lossoutput = 0
     for epoch in range(num_epochs):
@@ -55,7 +55,7 @@ def main():
         start_time = time.time()
         # for phase in ['test', 'train']:
 
-        for phase in ['train', 'test']:
+        for phase in ['train','test']:
             print("strating Itrerate")
             running_loss = 0.0
             train_start_time = time.time()
@@ -68,9 +68,9 @@ def main():
                     step_time = time.time()
                     print("Epoch {} Train Step {}: ".format(epoch, step))
                     step+=1
-                    if step % 20 == 0:
-                        backup_model_wts = copy.deepcopy(model.state_dict())
-                        torch.save(backup_model_wts, str(lossoutput)+'backup_model_wts.pkl')
+                    # if step % 20 == 0:
+                    #     backup_model_wts = copy.deepcopy(model.state_dict())
+                    #     torch.save(backup_model_wts, str(lossoutput)+'backup_model_wts.pkl')
                     # inputs = inputs.to(device)
                     # zero the parameter gradients
                     optimizer.zero_grad()
@@ -102,7 +102,7 @@ def main():
                 model.eval()  # Set model to evaluate mode
                 torch.set_grad_enabled(False)
                 step = 0;
-                for inputs, ground_truth in dataloader:
+                for inputs, ground_truth in dataloader_test:
                     step_time = time.time()
                     print("Epoch {} Test Step {}: ".format(epoch, step))
                     step+=1
@@ -111,11 +111,11 @@ def main():
                     ground_truth = ground_truth.to(device)
 
                     outputs = model(inputs)
-
+                    outputs = torch.sum(outputs, (-1, -2))
                     MAE += L1loss(outputs, ground_truth)
                     MSE += MSEloss(outputs, ground_truth)
-                    print("MAE", MAE.item())
-                    print("MSE", MSE.item())
+                    print("MAE", MAE.item()/step)
+                    print("MSE", MSE.item()/step)
                     print("This Step Used", time.time() - step_time)
                 print("MAE", MAE.item()/2000)
                 print("MSE", math.sqrt(MSE.item()/2000))
@@ -123,18 +123,18 @@ def main():
                 if MAE < MAE_best:
                     MAE_best = MAE
                     best_model_wts = copy.deepcopy(model.state_dict())
-                    torch.save(best_model_wts, 'best_model_wts.pkl')
+                    torch.save(best_model_wts, "IN"+"MAE"+str(MAE.item())+"MSE"+str(MSE.item())+'best_model_wts.pkl')
 
 
 
             # statistics
             # running_loss += loss.item() * inputs.size(0)
 
-            epoch_loss = running_loss / len(dataset.__len__())
+            # epoch_loss = running_loss / len(dataset.__len__())
 
-            print('{} Loss: {:.4f} '.format(phase, epoch_loss))
+            # print('{} Loss: {:.4f} '.format(phase, epoch_loss))
 
-        print("This Epoch used" + time.time()-start_time)
+        print("This Epoch used", time.time()-start_time)
         print()
 
 

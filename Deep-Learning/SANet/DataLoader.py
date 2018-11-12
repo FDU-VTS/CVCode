@@ -66,7 +66,7 @@ class MallDataset(Dataset):
         # return 60
 
     def __getitem__(self, idx):
-        image = io.imread(self.img_path + 'seq_00' + str(idx).zfill(4) + '.jpg')
+        image = io.imread(self.img_path + 'seq_00' + str(idx+1).zfill(4) + '.jpg')
         gray = color.rgb2gray(image)
         density = gaussian_kernel(gray, self.point[idx]['loc'][0][0])
         gray = torch.tensor(gray)
@@ -87,16 +87,12 @@ class MallDatasetTest(Dataset):
         return self.count.shape[0]
 
     def __getitem__(self, idx):
-        image_list = []
-        count_list = []
-        image = io.imread(self.img_path + 'seq_00' + str(idx).zfill(4) + '.jpg')
+        image = io.imread(self.img_path + 'seq_00' + str(idx+1).zfill(4) + '.jpg')
         gray = color.rgb2gray(image)
         count = self.count[idx]
-        image_list.append(gray)
-        count_list.append(count)
         # print("11", len(image_list))
-        image_list = torch.tensor(image_list, dtype = torch.double)
-        count_list = torch.tensor(count_list, dtype = torch.double)
-        image_list = torch.unsqueeze(image_list, 1)
+        gray = torch.tensor(gray)
+        gray = torch.unsqueeze(gray, 0)
+        count = torch.tensor(count, dtype=torch.double)
         # count_list = torch.unsqueeze(density_list, 1)
-        return image_list, count_list
+        return gray, count

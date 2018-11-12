@@ -6,6 +6,7 @@
 # --------------------------------------------------------
 import torch
 from torch import nn
+from collections import OrderedDict
 
 # four scale for conv
 class ConvScale(nn.Module):
@@ -23,7 +24,7 @@ class ConvScale(nn.Module):
         self.conv4 = nn.Conv2d(self.hidden, self.output_channels, kernel_size[3], 1, int((kernel_size[3] - 1) / 2), bias=bias)
         self.conv_result = nn.Conv2d(4, 1, 1, stride=1, padding=0, bias=bias)
 
-        
+
 
     def forward(self, input):
         # input.double()finish ci
@@ -72,10 +73,11 @@ class ScaleConvLSTMCell(nn.Module):
         self.Wxo = ConvScale(self.input_channels, self.hidden_channels, self.kernel_size, bias=True)
         self.Who = ConvScale(self.hidden_channels, self.hidden_channels, self.kernel_size, bias=False)
         self.device = torch.device("cuda:2" if torch.cuda.is_available() else "cpu")
+        # self.device = torch.device("cpu")
         #self.device = torch.device("cpu")
-        self.Wci = None
-        self.Wcf = None
-        self.Wco = None
+        self.Wci = nn.Parameter(torch.zeros(1, self.hidden_channels, 480, 640, dtype = torch.double, device = self.device))
+        self.Wcf = nn.Parameter(torch.zeros(1, self.hidden_channels, 480, 640, dtype = torch.double, device = self.device))
+        self.Wco = nn.Parameter(torch.zeros(1, self.hidden_channels, 480, 640, dtype = torch.double, device = self.device))
 
     def forward(self, x, h, c):
         # print("start ScaleConvLSTMCell")
@@ -89,9 +91,10 @@ class ScaleConvLSTMCell(nn.Module):
 
     def init_hidden(self, batch_size, hidden, shape):
         # print("init_hidden", self.device)
-        self.Wci = torch.zeros(1, hidden, shape[0], shape[1], dtype = torch.double, device = self.device)
-        self.Wcf = torch.zeros(1, hidden, shape[0], shape[1], dtype = torch.double, device = self.device)
-        self.Wco = torch.zeros(1, hidden, shape[0], shape[1], dtype = torch.double, device = self.device)
+        # print("try")
+        # self.Wci = nn.Parameter(torch.zeros(1, hidden, shape[0], shape[1], dtype = torch.double, device = self.device))
+        # self.Wcf = nn.Parameter(torch.zeros(1, hidden, shape[0], shape[1], dtype = torch.double, device = self.device))
+        # self.Wco = nn.Parameter(torch.zeros(1, hidden, shape[0], shape[1], dtype = torch.double, device = self.device))
         # print("Wci", self.Wci.device)
         return (torch.zeros(batch_size, hidden, shape[0], shape[1], dtype = torch.double, device = self.device),
                 torch.zeros(batch_size, hidden, shape[0], shape[1], dtype = torch.double, device = self.device))
@@ -129,6 +132,8 @@ class ScaleConvLSTM(nn.Module):
                 name = 'cell{}'.format(i)
                 # print("cell", name)
                 if step == 0:
+                # if self.init_state == False:
+                #     print("do it")
                     bsize, _, height, width = x.size()
                     (h, c) = getattr(self, name).init_hidden(batch_size=bsize, hidden=self.hidden_channels[i], shape=(height, width))
                     internal_state.append((h, c))
@@ -143,6 +148,7 @@ class ScaleConvLSTM(nn.Module):
             if step in self.effective_step:
                 outputs.append(x)
 
+
         return outputs
 
 def set_parameter_requires_grad(model, device):
@@ -151,19 +157,11 @@ def set_parameter_requires_grad(model, device):
         param = param.to(device)
         # print(param.dtype)
 
+
+
 if __name__ == '__main__':
 
     # gradient check
     convlstm = ScaleConvLSTM(input_channels=512, hidden_channels=[128, 64, 64, 32, 32], kernel_size=[1, 3, 5, 7], step=5, effective_step=[4])
-    loss_fn = torch.nn.MSELoss()
+    print(convlstm.state_dict())
 
-    convlstm = ScaleConvLSTM(input_channels=512, hidden_channels=[128, 64, 64, 32, 32], kernel_size=[1, 3, 5, 7], step=5, effective_step=[4])
-    loss_fn = torch.nn.MSELoss()
-
-    input = torch.randn(1, 512, 64, 32)
-    target = torch.randn((1, 32, 64, 32), dtype  = torch.double)
-
-    output = convlstm(input)
-    output = output[0][0].double()
-    res = torch.autograd.gradcheck(loss_fn, (output, target), eps=1e-6, raise_exception=True)
-    print(res)
