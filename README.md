@@ -8,6 +8,7 @@
  - MCNN(Crowd-Count via Multi-Column Convolutional Neural Network)
  - CSRNet
  - PaDNet
+ - TDFNet
  - SANet
  - ScaleConvLSTM
  - Conv2LSTM
