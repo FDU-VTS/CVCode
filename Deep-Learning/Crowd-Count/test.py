@@ -5,7 +5,9 @@
 # ------------------------
 # csr_net: 121.7, 177.4
 # mcnn: 141.1, 213.2
-from src import shtu_dataset, utils, mcnn, csr_net, sa_net
+from src import utils
+from src.datasets import shtu_dataset
+from src.models import mcnn
 import torch
 import torch.utils.data
 import warnings

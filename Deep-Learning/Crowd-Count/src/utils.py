@@ -42,6 +42,9 @@ def weights_normal_init(model, dev=0.01):
                     m.bias.data.fill_(0.0)
             elif isinstance(m, nn.Linear):
                 m.weight.data.normal_(0.0, dev)
+            elif isinstance(m, nn.BatchNorm2d):
+                nn.init.constant_(m.weight, 1)
+                nn.init.constant_(m.bias, 0)
 
     return model
 

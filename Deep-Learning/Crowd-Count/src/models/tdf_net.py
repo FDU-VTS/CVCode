@@ -1,7 +1,7 @@
 from __future__ import division
 import torch
 import torch.nn as nn
-from .mcnn import ConvUnit as Conv2d
+from src.models.mcnn import ConvUnit as Conv2d
 
 
 class BUNet(nn.Module):

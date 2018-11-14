@@ -11,6 +11,7 @@ import torch
 from torch.utils.data import Dataset
 from skimage import io, color
 import math, os
+import skimage.transform
 
 
 def gaussian_kernel(image, points):
@@ -53,26 +54,35 @@ def gaussian_kernel(image, points):
 
 
 class MallDataset(Dataset):
-    def __init__(self, img_path, point_path):
+    def __init__(self, img_path, point_path, zoom_size=1):
         self.img_path = img_path
         self.point_path = point_path
         ground_truth__dict = loadmat(point_path)
         self.point = ground_truth__dict['frame'][0]
+        self.zoom_size = zoom_size
+        self.num = self.point.shape[0]
 
     def __len__(self):
-        # print("len", self.point.shape[0]-39)
-        return self.point.shape[0]
+        return self.num
         # return 60
 
     def __getitem__(self, idx):
-        image = io.imread(self.img_path + 'seq_00' + str(idx+1).zfill(4) + '.jpg')
-        gray = color.rgb2gray(image)
-        density = gaussian_kernel(gray, self.point[idx]['loc'][0][0])
-        gray = torch.tensor(gray)
-        density = torch.tensor(density)
-        gray = torch.unsqueeze(gray, 0)
-        density = torch.unsqueeze(density, 0)
-        return gray, density
+        img = io.imread(self.img_path + 'seq_00' + str(idx+1).zfill(4) + '.jpg')
+        img = color.rgb2gray(img)
+        den = gaussian_kernel(img, self.point[idx]['loc'][0][0])
+        ht = img.shape[0]
+        wd = img.shape[1]
+        ht_1 = (ht // 8) * 8
+        wd_1 = (wd // 8) * 8
+        img = skimage.transform.resize(img, (wd_1, ht_1))
+        img = np.reshape(img, (wd_1, ht_1, 1))
+        img = np.transpose(img, (2, 0, 1))
+        ht_1 = ht_1 // self.zoom_size
+        wd_1 = wd_1 // self.zoom_size
+        den = skimage.transform.resize(den, (wd_1, ht_1))
+        den *= ((wd * ht) // (wd_1 * ht_1))
+
+        return img, den
 
 
 class MallDatasetTest(Dataset):
@@ -83,16 +93,13 @@ class MallDatasetTest(Dataset):
         self.count = ground_truth__dict['count']
 
     def __len__(self):
-        # print("len", self.point.shape[0]-39)
         return self.count.shape[0]
 
     def __getitem__(self, idx):
         image = io.imread(self.img_path + 'seq_00' + str(idx+1).zfill(4) + '.jpg')
         gray = color.rgb2gray(image)
         count = self.count[idx]
-        # print("11", len(image_list))
         gray = torch.tensor(gray)
         gray = torch.unsqueeze(gray, 0)
         count = torch.tensor(count, dtype=torch.double)
-        # count_list = torch.unsqueeze(density_list, 1)
         return gray, count

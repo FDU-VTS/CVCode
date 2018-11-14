@@ -10,7 +10,7 @@ import torch.nn as nn
 
 class ConvUnit(nn.Module):
 
-    def __init__(self, in_channels, out_channels, kernel_size, stride=1, bn=True):
+    def __init__(self, in_channels, out_channels, kernel_size, stride=1, bn=False):
         super(ConvUnit, self).__init__()
         padding = int((kernel_size - 1)/2)
         self.features = nn.Sequential(
@@ -45,7 +45,7 @@ class FC(nn.Module):
 
 class MCNN(nn.Module):
 
-    def __init__(self, bn=True):
+    def __init__(self, bn=False):
         super(MCNN, self).__init__()
 
         self.column1 = nn.Sequential(

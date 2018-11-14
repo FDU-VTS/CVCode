@@ -6,6 +6,7 @@
 
 import torch.nn as nn
 from torchvision import models
+from src.utils import weights_normal_init
 
 
 class CSRNet(nn.Module):
@@ -18,7 +19,7 @@ class CSRNet(nn.Module):
         self.backend = make_layers(self.backend_feat, in_channels=512, dilation=True)
         self.output_layer = nn.Conv2d(64, 1, kernel_size=1)
         if not load_weights:
-            self._initialize_weights()
+            weights_normal_init(self)
             mod = models.vgg16(pretrained=True)
             pretrained_dict = mod.state_dict()
             frontend_dict = self.frontend.state_dict()
@@ -31,16 +32,6 @@ class CSRNet(nn.Module):
         x = self.backend(x)
         x = self.output_layer(x)
         return x
-
-    def _initialize_weights(self):
-        for m in self.modules():
-            if isinstance(m, nn.Conv2d):
-                nn.init.normal_(m.weight, std=0.01)
-                if m.bias is not None:
-                    nn.init.constant_(m.bias, 0)
-            elif isinstance(m, nn.BatchNorm2d):
-                nn.init.constant_(m.weight, 1)
-                nn.init.constant_(m.bias, 0)
 
 
 def make_layers(cfg, in_channels=3, batch_norm=False, dilation=False):
