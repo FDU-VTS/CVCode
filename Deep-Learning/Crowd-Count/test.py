@@ -22,9 +22,9 @@ def test():
     test_loader = torch.utils.data.DataLoader(test_data, batch_size=1, shuffle=False)
     print("init net...........")
     net = mcnn.CrowdCounter()
-    utils.load_net("./model/mcnn_shtechA_660.h5", net)
+    utils.load_net("./results/mcnn_shtechA_660.h5", net)
     net = net.to(DEVICE)
-    # for each 2 epochs in 2000 get and model to test
+    # for each 2 epochs in 2000 get and results to test
     # and keep the best one
     sum_mae = 0.0
     sum_mse = 0.0

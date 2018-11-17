@@ -60,44 +60,57 @@ class SANet(nn.Module):
         self.kernel_size = kernel_size
         self.FME = nn.Sequential(
             ConvScale(self.input_channels, 64, self.kernel_size, bias=True),
+            nn.InstanceNorm2d(64, affine=True),
             nn.ReLU(inplace=True),
             nn.MaxPool2d(kernel_size=2, stride=2, padding=0, dilation=1, ceil_mode=False),
 
             ConvScale(64, 128, self.kernel_size, bias=True),
+            nn.InstanceNorm2d(128, affine=True),
             nn.ReLU(inplace=True),
             nn.MaxPool2d(kernel_size=2, stride=2, padding=0, dilation=1, ceil_mode=False),
 
             ConvScale(128, 128, self.kernel_size, bias=True),
+            nn.InstanceNorm2d(128, affine=True),
             nn.ReLU(inplace=True),
             nn.MaxPool2d(kernel_size=2, stride=2, padding=0, dilation=1, ceil_mode=False),
 
             ConvScale(128, 64, self.kernel_size, bias=True),
+            nn.InstanceNorm2d(64, affine=True),
             nn.ReLU(inplace=True),
         )
 
         self.DME = nn.Sequential(
             nn.Conv2d(64, 64, 9, stride=1, padding=int((9 - 1) / 2), bias=True),
+            nn.InstanceNorm2d(64, affine=True),
             nn.ReLU(inplace=True),
             nn.ConvTranspose2d(64, 64, 9, stride=2, padding=4, output_padding=1, bias=True),
+            nn.InstanceNorm2d(64, affine=True),
             nn.ReLU(inplace=True),
 
             nn.Conv2d(64, 32, 7, stride=1, padding=int((7 - 1) / 2), bias=True),
+            nn.InstanceNorm2d(32, affine=True),
             nn.ReLU(inplace=True),
             nn.ConvTranspose2d(32, 32, 7, stride=2, padding=3, output_padding=1, bias=True),
+            nn.InstanceNorm2d(32, affine=True),
             nn.ReLU(inplace=True),
 
             nn.Conv2d(32, 16, 5, stride=1, padding=int((5 - 1) / 2), bias=True),
+            nn.InstanceNorm2d(16, affine=True),
             nn.ReLU(inplace=True),
             nn.ConvTranspose2d(16, 16, 5, stride=2, padding=2, output_padding=1, bias=True),
+            nn.InstanceNorm2d(16, affine=True),
             nn.ReLU(inplace=True),
 
             nn.Conv2d(16, 16, 3, stride=1, padding=int((3 - 1) / 2), bias=True),
+            nn.InstanceNorm2d(16, affine=True),
             nn.ReLU(inplace=True),
 
             nn.Conv2d(16, 16, 5, stride=1, padding=int((5 - 1) / 2), bias=True),
+            nn.InstanceNorm2d(16, affine=True),
             nn.ReLU(inplace=True),
 
             nn.Conv2d(16, 1, 1, stride=1, padding=int((1 - 1) / 2), bias=True),
+            nn.InstanceNorm2d(1, affine=True),
             nn.ReLU(inplace=True),
         )
 
