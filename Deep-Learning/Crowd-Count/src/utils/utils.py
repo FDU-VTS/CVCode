@@ -3,13 +3,20 @@
 # written by Songjian Chen
 # 2018-10
 # ------------------------
+from src.utils.ssim import SSIM
 import torch.nn as nn
 import torch
-import numpy as np
+
+
+def sa_loss(output, ground_truth):
+    loss = get_loss(output, ground_truth)
+    ground_truth = torch.unsqueeze(ground_truth, 0)
+    ssim_loss = SSIM()
+    loss += 0.001 * (1 - ssim_loss(output, ground_truth))
+    return loss
 
 
 def get_loss(output, ground_truth):
-
     loss_function = nn.MSELoss()
     output_density = output[0].view(output.size(2), output.size(3))
     ground_truth_density = ground_truth[0]
@@ -19,7 +26,6 @@ def get_loss(output, ground_truth):
 
 
 def get_test_loss(output, ground_truth):
-
     output_density = output[0].view(output.size(2), output.size(3))
     ground_truth_density = ground_truth[0]
     sum_output = torch.sum(output_density)
@@ -47,11 +53,3 @@ def weights_normal_init(model, dev=0.01):
                 nn.init.constant_(m.bias, 0)
 
     return model
-
-
-def load_net(fname, net):
-    import h5py
-    h5f = h5py.File(fname, mode='r')
-    for k, v in net.state_dict().items():
-        param = torch.from_numpy(np.asarray(h5f[k]))
-        v.copy_(param)

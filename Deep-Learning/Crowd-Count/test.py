@@ -1,47 +1,24 @@
-# -*- coding:utf-8 -*-
-# ------------------------
-# written by Songjian Chen
-# 2018-10
-# ------------------------
-# csr_net: 121.7, 177.4
-# mcnn: 141.1, 213.2
-from src import utils
-from src.datasets import shtu_dataset
-from src.models import mcnn
-import torch
-import torch.utils.data
-import warnings
-import math
-warnings.filterwarnings("ignore")
-DEVICE = "cuda:1" if torch.cuda.is_available() else "cpu"
+import skimage.io
+from scipy.io import loadmat
+import numpy as np
 
-
-def test():
-    print("test data loading............")
-    test_data = shtu_dataset.ShanghaiTechDataset(mode="test")
-    test_loader = torch.utils.data.DataLoader(test_data, batch_size=1, shuffle=False)
-    print("init net...........")
-    net = mcnn.CrowdCounter()
-    utils.load_net("./results/mcnn_shtechA_660.h5", net)
-    net = net.to(DEVICE)
-    # for each 2 epochs in 2000 get and results to test
-    # and keep the best one
-    sum_mae = 0.0
-    sum_mse = 0.0
-    i = 0
-    for input, ground_truth in iter(test_loader):
-        input = input.float().to(DEVICE)
-        ground_truth = ground_truth.float().to(DEVICE)
-        output = net(input)
-        mae, mse = utils.get_test_loss(output, ground_truth)
-        sum_mae += float(mae)
-        sum_mse += float(mse)
-        i += 1
-        if i % 50 == 0:
-            print("{0} images".format(i))
-    print("best_mae:%.1f, best_mse:%.1f" % (sum_mae / len(test_loader), math.sqrt(sum_mse/len(test_loader))))
-
-
-if __name__ == "__main__":
-    print("start....")
-    test()
+path = "./data/original/part_A_final/train_data/images/IMG_1.jpg"
+sum = 0
+for index in range(1, 301):
+    print(index)
+    gt = "./data/original/part_B_final/train_data/ground_truth/GT_IMG_{0}.mat".format(index)
+    image = skimage.io.imread(path)
+    mat = loadmat(gt)
+    image_info = mat["image_info"]
+    ann_points = image_info[0][0][0][0][0]
+    d_mean = 0.0
+    for i in ann_points:
+        y = (ann_points - i) * (ann_points - i)
+        y = np.sum(y, axis=1)
+        y = np.sort(y)
+        y = np.sqrt(y)
+        mean = np.sum(y[:4]) / 3
+        d_mean += mean
+    d_mean /= len(ann_points)
+    sum += d_mean
+print(sum / 300)

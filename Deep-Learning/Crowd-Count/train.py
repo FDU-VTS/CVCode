@@ -3,23 +3,20 @@
 # written by Songjian Chen
 # 2018-10
 # ------------------------
-# csr_net: 121.7, 177.4
-# mcnn: 121.9, 183.9
-from src import utils
+from src.utils import utils
 from src.datasets import mall_dataset, shtu_dataset
 from src.models import csr_net, sa_net, tdf_net, mcnn
 import torch
-import torch.utils.datas
+import torch.utils.data
 import torch.optim as optim
 import warnings
 import sys
 import math
 import numpy as np
-import os
+from tensorboardX import SummaryWriter
 warnings.filterwarnings("ignore")
 DEVICE = "cuda:0" if torch.cuda.is_available() else "cpu"
-learning_rate = 0.00001
-save_path = "./results/mcnn.pkl"
+learning_rate = 1e-4
 models = {
     'mcnn': utils.weights_normal_init(mcnn.MCNN(bn=True), dev=0.01),
     'csr_net': csr_net.CSRNet(),
@@ -60,20 +57,16 @@ def train(zoom_size=4, model="mcnn", dataset="shtu_dataset"):
         print("test data loading............")
         mall_test_data = mall_data
         test_loader = torch.utils.data.DataLoader(mall_test_data, batch_size=6, shuffle=False, num_workers=6)
-    number = len(tech_loader)
     print("init net...........")
     net = models[model]
     net = net.train().to(DEVICE)
     print("init optimizer..........")
-    # optimizer = optim.Adam(filter(lambda p:p.requires_grad, net.parameters()), lr=learning_rate)
-    # optimizer = optim.SGD(filter(lambda p:p.requires_grad, net.parameters()), lr=learning_rate, momentum=0.9)
-    optimizer = optim.SGD(net.parameters(), lr=1e-7, momentum=0.95, weight_decay=5*1e-4)
+    optimizer = optim.Adam(filter(lambda p:p.requires_grad, net.parameters()), lr=learning_rate)
     print("start to train net.....")
-    sum_loss = 0
-    step = 0
-    result = []
-    epoch_index = -1
+    sum_loss = 0.0
+    epoch_index = 0
     min_mae = sys.maxsize
+    writer = SummaryWriter('runs/'+model+"-bn")
     # for each 2 epochs in 2000 get and results to test
     # and keep the best one
     for epoch in range(2000):
@@ -85,12 +78,7 @@ def train(zoom_size=4, model="mcnn", dataset="shtu_dataset"):
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
-
             sum_loss += float(loss)
-            step += 1
-            if step % (number // 2) == 0:
-                print("{0} patches are done, loss: ".format(step), sum_loss / (number // 2))
-                sum_loss = 0
 
         if epoch % 2 == 0:
             sum_mae = 0.0
@@ -105,26 +93,22 @@ def train(zoom_size=4, model="mcnn", dataset="shtu_dataset"):
             if sum_mae / len(test_loader) < min_mae:
                 min_mae = sum_mae / len(test_loader)
                 min_mse = sum_mse / len(test_loader)
-                result.append([min_mae, math.sqrt(min_mse)])
-                torch.save(net.state_dict(), "./results/mall_result/mcnn.pkl")
             print("best_mae:%.1f, best_mse:%.1f" % (min_mae, math.sqrt(min_mse)))
-            epoch_index += 2
             print("{0} epoches / 2000 epoches are done".format(epoch_index))
-        step = 0
-    result = np.asarray(result)
-    try:
-        np.save("./results/mall_result/mcnn.npy", result)
-    except IOError:
-        os.mkdir("./results")
-        np.save("./results/mall_result/mcnn.npy", result)
-    print("save successful!")
+        writer.add_scalar(model+"-bn/loss", np.asarray(sum_loss / len(test_loader), dtype=np.float32), epoch_index)
+        writer.add_scalar(model+"-bn/mae", np.asarray(min_mae), epoch_index)
+        writer.add_scalar(model+"-bn/mse", np.asarray(min_mse), epoch_index)
+        print("{0} patches are done, loss: ".format(epoch_index), sum_loss / len(test_loader))
+        epoch_index += 1
+        sum_loss = 0.0
+    writer.close()
 
 
 if __name__ == "__main__":
+    # args: zoom_size, model, dataset
     print("start....")
     model = str(sys.argv[1])
     zoom_size = int(sys.argv[2])
     dataset = str(sys.argv[3])
     print("results: {0}, zoom_size: {1}".format(model, zoom_size))
     train(zoom_size=zoom_size, model=model, dataset=dataset)
-

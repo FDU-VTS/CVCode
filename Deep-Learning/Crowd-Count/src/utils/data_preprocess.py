@@ -14,8 +14,6 @@ import cv2
 import math
 import warnings
 import random
-import torch
-import matplotlib.pyplot as plt
 warnings.filterwarnings("ignore")
 
 
