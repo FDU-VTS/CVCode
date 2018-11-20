@@ -47,6 +47,7 @@ def gaussian_kernel(image, points):
 
     return image_density
 
+
 def gaussian_filter_density(gt, pts):
     print(gt.shape)
     density = np.zeros(gt.shape, dtype=np.float32)

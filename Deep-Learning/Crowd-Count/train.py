@@ -16,7 +16,7 @@ import numpy as np
 from tensorboardX import SummaryWriter
 warnings.filterwarnings("ignore")
 DEVICE = "cuda:0" if torch.cuda.is_available() else "cpu"
-learning_rate = 1e-4
+learning_rate = 1e-5
 models = {
     'mcnn': utils.weights_normal_init(mcnn.MCNN(bn=True), dev=0.01),
     'csr_net': csr_net.CSRNet(),
@@ -66,7 +66,8 @@ def train(zoom_size=4, model="mcnn", dataset="shtu_dataset"):
     sum_loss = 0.0
     epoch_index = 0
     min_mae = sys.maxsize
-    writer = SummaryWriter('runs/'+model+"-bn")
+    model_dir = model + "_" + dataset
+    writer = SummaryWriter('runs/'+model_dir)
     # for each 2 epochs in 2000 get and results to test
     # and keep the best one
     for epoch in range(2000):
@@ -95,9 +96,9 @@ def train(zoom_size=4, model="mcnn", dataset="shtu_dataset"):
                 min_mse = sum_mse / len(test_loader)
             print("best_mae:%.1f, best_mse:%.1f" % (min_mae, math.sqrt(min_mse)))
             print("{0} epoches / 2000 epoches are done".format(epoch_index))
-        writer.add_scalar(model+"-bn/loss", np.asarray(sum_loss / len(test_loader), dtype=np.float32), epoch_index)
-        writer.add_scalar(model+"-bn/mae", np.asarray(min_mae), epoch_index)
-        writer.add_scalar(model+"-bn/mse", np.asarray(min_mse), epoch_index)
+        writer.add_scalar(model_dir + "/loss", np.asarray(sum_loss / len(test_loader), dtype=np.float32), epoch_index)
+        writer.add_scalar(model_dir + "/mae", np.asarray(min_mae), epoch_index)
+        writer.add_scalar(model_dir + "/mse", np.asarray(min_mse), epoch_index)
         print("{0} patches are done, loss: ".format(epoch_index), sum_loss / len(test_loader))
         epoch_index += 1
         sum_loss = 0.0
