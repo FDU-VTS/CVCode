@@ -9,6 +9,8 @@ import skimage.io
 from skimage.color import rgb2gray
 import skimage.transform
 from scipy.io import loadmat
+import scipy
+import scipy.ndimage
 import numpy as np
 import cv2
 import math
