@@ -11,8 +11,9 @@
    - PaDNet
    - TDFNet
    - SANet
- - ScaleConvLSTM
- - Conv2LSTM
+ - ConvLSTM
+   - ScaleConvLSTM
+   - Conv2LSTM
  - Transfer-Learning
    - VGG16 with VOC2007
 
