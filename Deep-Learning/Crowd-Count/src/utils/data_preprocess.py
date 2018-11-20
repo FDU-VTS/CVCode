@@ -45,6 +45,31 @@ def gaussian_kernel(image, points):
 
     return image_density
 
+def gaussian_filter_density(gt, pts):
+    print(gt.shape)
+    density = np.zeros(gt.shape, dtype=np.float32)
+    gt_count = len(pts)
+    if gt_count == 0:
+        return density
+    
+    leafsize = 2048
+    # build kdtree
+    tree = scipy.spatial.KDTree(pts.copy(), leafsize=leafsize)
+    # query kdtree
+    distances, locations = tree.query(pts, k=4)
+    
+    print('generate density...')
+    for i, pt in enumerate(pts):
+        pt2d = np.zeros(gt.shape, dtype=np.float32)
+        pt2d[int(round(pt[1])),int(round(pt[0]))] = 1.
+        if gt_count > 1:
+            sigma = (distances[i][1]+distances[i][2]+distances[i][3])*0.1
+        else:
+            sigma = np.average(np.array(gt.shape))/2./2. #case: 1 point
+        density += scipy.ndimage.filters.gaussian_filter(pt2d, sigma, mode='constant')
+    print('done.')
+    return density
+
 
 def extract_data(mode="train", patch_number=9, part="A"):
     num_images = 300 if mode=="train" else 182
