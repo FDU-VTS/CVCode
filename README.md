@@ -11,6 +11,7 @@
    - PaDNet
    - TDFNet
    - SANet
+   - Inception
  - ConvLSTM
    - ScaleConvLSTM
    - Conv2LSTM
