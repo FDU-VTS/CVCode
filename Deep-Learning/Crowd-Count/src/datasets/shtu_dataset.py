@@ -29,8 +29,8 @@ def get_data(mode="train", zoom_size=4):
             img = rgb2gray(img)
         ht = img.shape[0]
         wd = img.shape[1]
-        ht_1 = (ht // 8) * 8
-        wd_1 = (wd // 8) * 8
+        ht_1 = (ht // 16) * 16
+        wd_1 = (wd // 16) * 16
         img = skimage.transform.resize(img, (wd_1, ht_1))
         img = np.reshape(img, (wd_1, ht_1, 1))
         img = np.transpose(img, (2, 0, 1))

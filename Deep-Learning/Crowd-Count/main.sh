@@ -16,4 +16,7 @@ case ${model_name} in
     "tdf_net")
         python train.py tdf_net 4 ${dataset}
     ;;
+    "inception")
+        python train.py inception 16 ${dataset}
+    ;;
 esac

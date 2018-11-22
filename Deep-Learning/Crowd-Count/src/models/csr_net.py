@@ -13,8 +13,7 @@ class CSRNet(nn.Module):
     def __init__(self, load_weights=False):
         super(CSRNet, self).__init__()
         self.seen = 0
-        # self.frontend_feat = [64, 64, 'M', 128, 128, 'M', 256, 256, 256, 'M', 512, 512, 512]
-        self.frontend_feat = [64, 64, 128, 128, 256, 256, 256, 512, 512, 512]
+        self.frontend_feat = [64, 64, 'M', 128, 128, 'M', 256, 256, 256, 'M', 512, 512, 512]
         self.backend_feat = [512, 512, 512, 256, 128, 64]
         self.frontend = make_layers(self.frontend_feat, in_channels=1)
         self.backend = make_layers(self.backend_feat, in_channels=512, dilation=True)
@@ -30,7 +29,7 @@ class CSRNet(nn.Module):
 
     def forward(self, x):
         x = self.frontend(x)
-        # x = self.backend(x)
+        x = self.backend(x)
         x = self.output_layer(x)
         return x
 
