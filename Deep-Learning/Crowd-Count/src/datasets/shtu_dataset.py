@@ -13,9 +13,9 @@ import numpy as np
 
 def get_data(mode="train", zoom_size=4):
     # index train_image ground_truth
-    data_path = "./data/preprocessed/{0}".format(mode) \
+    data_path = "./data/shtu_dataset/preprocessed/{0}".format(mode) \
         if mode == "train" else "./data/original/part_A_final/test_data/images/"
-    ground_truth = "./data/preprocessed/{0}_density".format(mode) \
+    ground_truth = "./data/shtu_dataset/preprocessed/{0}_density".format(mode) \
         if mode == "train" else "./data/preprocessed/test_density/"
     data_files = [filename for filename in os.listdir(data_path) \
                  if os.path.isfile(os.path.join(data_path, filename))]

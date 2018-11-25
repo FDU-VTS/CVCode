@@ -11,6 +11,7 @@ import torchvision
 from src.models import inception
 import torch
 from torchsummary import summary
+import cv2
 
 
 def gaussian_filter_density(gt, pts):
@@ -40,16 +41,6 @@ def gaussian_filter_density(gt, pts):
     return density
 
 
-# path = "./data/original/part_A_final/train_data/ground_truth/GT_IMG_141.mat"
-# image_name = "./data/original/part_A_final/train_data/images/IMG_141.jpg"
-# image = skimage.io.imread(image_name)
-# if image.shape[-1] == 3:
-#     image = rgb2gray(image)
-# mat = loadmat(path)
-# image_info = mat["image_info"]
-# ann_points = image_info[0][0][0][0][0]
-# ann_points = sorted(ann_points, key=lambda x:x[0])
-# for i in ann_points:
-#     print(i)
-# gaussian_filter_density(image, ann_points)
-
+a = np.load("./data/preprocessed/test_density/IMG_1.npy")
+plt.imshow(a)
+plt.show()

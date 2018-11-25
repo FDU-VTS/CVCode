@@ -78,15 +78,15 @@ def gaussian_filter_density(gt, pts, index):
 def extract_data(mode="train", patch_number=9, part="A"):
     num_images = 300 if mode=="train" else 182
     # original path
-    dataset_path = "./data/original/part_{0}_final/".format(part)
+    dataset_path = "./data/shtu_dataset/original/part_{0}_final/".format(part)
     mode_data = os.path.join(dataset_path, "{0}_data".format(mode))
     mode_images = os.path.join(mode_data, "images")
     mode_ground_truth = os.path.join(mode_data, "ground_truth")
     # preprocessed path
-    preprocessed_mode = "./data/preprocessed/{0}/".format(mode)
-    preprocessed_mode_density = "./data/preprocessed/{0}_density/".format(mode)
-    if not os.path.exists("./data/preprocessed/"):
-        os.mkdir("./data/preprocessed/")
+    preprocessed_mode = "./data/shtu_dataset/preprocessed/{0}/".format(mode)
+    preprocessed_mode_density = "./data/shtu_dataset/preprocessed/{0}_density/".format(mode)
+    if not os.path.exists("./data/shtu_dataset/preprocessed/"):
+        os.mkdir("./data/shtu_dataset/preprocessed/")
     if not os.path.exists(preprocessed_mode):
         os.mkdir(preprocessed_mode)
     if not os.path.exists(preprocessed_mode_density):
@@ -134,15 +134,13 @@ def extract_data(mode="train", patch_number=9, part="A"):
 
 def extract_test_data(part="A"):
     num_images = 183 if part == "A" else 317
-    test_data_path = "./data/original/part_{part}_final/test_data/images".format(part=part)
-    test_ground_path = "./data/original/part_{part}_final/test_data/ground_truth".format(part=part)
-    test_density_path = "./data/preprocessed/test_density"
+    test_data_path = "./data/shtu_dataset/original/part_{part}_final/test_data/images".format(part=part)
+    test_ground_path = "./data/shtu_dataset/original/part_{part}_final/test_data/ground_truth".format(part=part)
+    test_density_path = "./data/shtu_dataset/preprocessed/test_density"
     print("create directory........")
     if not os.path.exists(test_density_path):
         os.mkdir(test_density_path)
-
     print("begin to preprocess test data........")
-
     for index in range(1, num_images):
         if index % 10 == 0:
             print("{num} images are done".format(num=index))
@@ -157,9 +155,6 @@ def extract_test_data(part="A"):
         # ann_points: points pixels mean people
         # number: number of people in the image
         ann_points = image_info[0][0][0][0][0] - 1
-        number = image_info[0][0][0][0][1]
-        h = float(image.shape[0])
-        w = float(image.shape[1])
         # convert images to density
         image_density = gaussian_filter_density(image, ann_points, index)
         np.save(os.path.join(test_density_path, "IMG_{0}.npy".format(index)), image_density)

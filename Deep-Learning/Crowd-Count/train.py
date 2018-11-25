@@ -15,10 +15,8 @@ import sys
 import math
 import numpy as np
 from tensorboardX import SummaryWriter
-import torchvision
 warnings.filterwarnings("ignore")
 DEVICE = "cuda:0" if torch.cuda.is_available() else "cpu"
-learning_rate = 1e-5
 models = {
     'mcnn': utils.weights_normal_init(mcnn.MCNN(bn=False), dev=0.01),
     'csr_net': csr_net.CSRNet(),
@@ -63,13 +61,14 @@ def train(zoom_size=4, model="mcnn", dataset="shtu_dataset"):
     print("init net...........")
     net = models[model]
     net = net.train().to(DEVICE)
-    net = nn.DataParallel(net, device_ids=[0, 1])
     print("init optimizer..........")
-    optimizer = optim.Adam(filter(lambda p:p.requires_grad, net.parameters()), lr=learning_rate)
+    learning_rate = 0.1
+    # optimizer = optim.Adam(filter(lambda p:p.requires_grad, net.parameters()), lr=learning_rate)
+    optimizer = optim.SGD(filter(lambda p:p.requires_grad, net.parameters()), lr=learning_rate)
     print("start to train net.....")
     sum_loss = 0.0
     epoch_index = 0
-    i = 0
+    temp_loss = 0.0
     min_mae = sys.maxsize
     model_dir = model + "_" + dataset
     writer = SummaryWriter('runs/'+model_dir)
@@ -85,14 +84,12 @@ def train(zoom_size=4, model="mcnn", dataset="shtu_dataset"):
             loss.backward()
             optimizer.step()
             sum_loss += float(loss)
-            if i % 100 == 99:
-                print("{0} steps' loss is {1}".format(i + 1, sum_loss / 100))
-                sum_loss = 0
-            i += 1
 
         if epoch % 2 == 0:
-            test_net = net
-            test_net = test_net.to("cuda:1")
+            torch.save(net.state_dict(), "./models/inception_{0}.pkl".format(epoch_index))
+            test_net = inception.Inception()
+            test_net.load_state_dict(torch.load("./models/inception_{0}.pkl".format(epoch_index)), strict=False)
+            test_net.eval().to("cuda:1")
             sum_mae = 0.0
             sum_mse = 0.0
             for input, ground_truth in iter(test_loader):
@@ -100,18 +97,22 @@ def train(zoom_size=4, model="mcnn", dataset="shtu_dataset"):
                 ground_truth = ground_truth.float().to("cuda:1")
                 output = test_net(input)
                 mae, mse = utils.get_test_loss(output, ground_truth)
-                sum_mae += float(mae)
-                sum_mse += float(mse)
-            if sum_mae / len(test_loader) < min_mae:
-                min_mae = sum_mae / len(test_loader)
-                min_mse = sum_mse / len(test_loader)
-            print("best_mae:%.1f, best_mse:%.1f" % (min_mae, math.sqrt(min_mse)))
+                sum_mae += float(mae) / len(test_loader)
+                sum_mse += float(mse) / len(test_loader)
+            if sum_mae < min_mae:
+                torch.save(test_net.state_dict(), "./models/best_inception.pkl")
+                min_mae = sum_mae
+                min_mse = sum_mse
+            print("mae:%.1f, mse:%.1f, best_mae:%.1f, best_mse:%.1f" % (sum_mae, math.sqrt(sum_mse), min_mae, math.sqrt(min_mse)))
             print("{0} epoches / 2000 epoches are done".format(epoch_index)),
+            print("sum loss is {0}".format(sum_loss))
         writer.add_scalar(model_dir + "/loss", np.asarray(sum_loss / len(test_loader), dtype=np.float32), epoch_index)
-        writer.add_scalar(model_dir + "/mae", np.asarray(min_mae), epoch_index)
-        writer.add_scalar(model_dir + "/mse", np.asarray(min_mse), epoch_index)
-        print("{0} patches are done, loss: ".format(epoch_index), sum_loss / len(test_loader))
+        writer.add_scalar(model_dir + "/mae", np.asarray(sum_mae), epoch_index)
+        writer.add_scalar(model_dir + "/mse", np.asarray(math.sqrt(sum_mse)), epoch_index)
         epoch_index += 1
+        if temp_loss == sum_loss:
+            learning_rate /= 10
+            optimizer = optim.SGD(filter(lambda p:p.requires_grad, net.parameters()), lr=learning_rate)
         sum_loss = 0.0
 
     writer.close()
