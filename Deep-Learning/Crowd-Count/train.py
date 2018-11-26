@@ -9,7 +9,6 @@ from src.models import csr_net, sa_net, tdf_net, mcnn, inception
 import torch
 import torch.utils.data
 import torch.optim as optim
-import torch.nn as nn
 import warnings
 import sys
 import math
@@ -35,7 +34,7 @@ models = {
 """
 
 
-def train(zoom_size=4, model="mcnn", dataset="shtu_dataset"):
+def train(zoom_size=4, model="mcnn", dataset="shtu_dataset", learning_rate=1e-5, optim_name="SGD"):
     """
 
     :type zoom_size: int
@@ -62,9 +61,8 @@ def train(zoom_size=4, model="mcnn", dataset="shtu_dataset"):
     net = models[model]
     net = net.train().to(DEVICE)
     print("init optimizer..........")
-    learning_rate = 0.1
-    # optimizer = optim.Adam(filter(lambda p:p.requires_grad, net.parameters()), lr=learning_rate)
-    optimizer = optim.SGD(filter(lambda p:p.requires_grad, net.parameters()), lr=learning_rate)
+    optimizer = optim.Adam(filter(lambda p:p.requires_grad, net.parameters()), lr=learning_rate) if optim_name == "Adam" else \
+                optim.SGD(filter(lambda p: p.requires_grad, net.parameters()), lr=learning_rate)
     print("start to train net.....")
     sum_loss = 0.0
     epoch_index = 0
@@ -105,14 +103,11 @@ def train(zoom_size=4, model="mcnn", dataset="shtu_dataset"):
                 min_mse = sum_mse
             print("mae:%.1f, mse:%.1f, best_mae:%.1f, best_mse:%.1f" % (sum_mae, math.sqrt(sum_mse), min_mae, math.sqrt(min_mse)))
             print("{0} epoches / 2000 epoches are done".format(epoch_index)),
-            print("sum loss is {0}".format(sum_loss))
+            print("sum loss is {0}".format(sum_loss / len(test_loader)))
         writer.add_scalar(model_dir + "/loss", np.asarray(sum_loss / len(test_loader), dtype=np.float32), epoch_index)
         writer.add_scalar(model_dir + "/mae", np.asarray(sum_mae), epoch_index)
         writer.add_scalar(model_dir + "/mse", np.asarray(math.sqrt(sum_mse)), epoch_index)
         epoch_index += 1
-        if temp_loss == sum_loss:
-            learning_rate /= 10
-            optimizer = optim.SGD(filter(lambda p:p.requires_grad, net.parameters()), lr=learning_rate)
         sum_loss = 0.0
 
     writer.close()
@@ -124,5 +119,7 @@ if __name__ == "__main__":
     model = str(sys.argv[1])
     zoom_size = int(sys.argv[2])
     dataset = str(sys.argv[3])
+    learning_rate = float(sys.argv[4])
+    optim_name = str(sys.argv[5])
     print("results: {0}, zoom_size: {1}".format(model, zoom_size))
-    train(zoom_size=zoom_size, model=model, dataset=dataset)
+    train(zoom_size=zoom_size, model=model, dataset=dataset, learning_rate=learning_rate, optim_name=optim_name)

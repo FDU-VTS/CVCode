@@ -1,6 +1,7 @@
 import torch
 import torch.nn.functional as F
 from .network import *
+import torchvision.models
 
 
 __all__ = ['Inception']
@@ -8,7 +9,7 @@ __all__ = ['Inception']
 
 class Inception(nn.Module):
 
-    def __init__(self, num_classes=1000, aux_logits=True, transform_input=False):
+    def __init__(self, num_classes=1000, aux_logits=True, transform_input=False, pretrained=True):
         super(Inception, self).__init__()
         self.aux_logits = aux_logits
         self.transform_input = transform_input
@@ -43,6 +44,14 @@ class Inception(nn.Module):
             elif isinstance(m, nn.BatchNorm2d):
                 m.weight.data.fill_(1)
                 m.bias.data.zero_()
+        if pretrained:
+            mod = torchvision.models.inception_v3(pretrained=True)
+            pretrained_dict = mod.state_dict()
+            inception_dict = self.state_dict()
+            pretrained_dict = {k: v for k, v in pretrained_dict.items() if k in inception_dict}
+            inception_dict.update(pretrained_dict)
+            self.load_state_dict(inception_dict)
+
 
     def forward(self, x):
         if self.transform_input:
