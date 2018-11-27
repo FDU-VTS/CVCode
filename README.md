@@ -12,6 +12,7 @@
    - TDFNet
    - SANet
    - Inception
+   - ASPP(Atrous Spatial Pyramid Pooling)
  - ConvLSTM
    - ScaleConvLSTM
    - Conv2LSTM
