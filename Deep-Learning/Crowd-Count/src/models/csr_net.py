@@ -17,7 +17,7 @@ class CSRNet(nn.Module):
         self.backend_feat = [512, 512, 512, 256, 128, 64]
         self.frontend = make_layers(self.frontend_feat, in_channels=1)
         self.backend = make_layers(self.backend_feat, in_channels=512, dilation=True)
-        self.output_layer = nn.Conv2d(512, 1, kernel_size=1)
+        self.output_layer = nn.Conv2d(64, 1, kernel_size=1)
         if not load_weights:
             utils.weights_normal_init(self)
             mod = models.vgg16(pretrained=True)

@@ -111,6 +111,7 @@ def extract_data(mode="train", patch_number=9, part="A"):
         h, w = image.shape
         w_block = math.floor(w / 8)
         h_block = math.floor(h / 8)
+        # get 0-3
         for j in range(4):
             # 0, 1, 2, 3
             x = j % 2
