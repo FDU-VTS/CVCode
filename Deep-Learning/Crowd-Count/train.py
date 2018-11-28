@@ -15,8 +15,9 @@ import math
 import numpy as np
 from tensorboardX import SummaryWriter
 import os
+from torchvision import transforms
 warnings.filterwarnings("ignore")
-DEVICE = "cuda:3" if torch.cuda.is_available() else "cpu"
+DEVICE = "cuda:2" if torch.cuda.is_available() else "cpu"
 models = {
     'mcnn': utils.weights_normal_init(mcnn.MCNN(bn=False), dev=0.01),
     'csr_net': csr_net.CSRNet(),
@@ -37,12 +38,14 @@ models = {
 
 def train(zoom_size=4, model="mcnn", dataset="shtu_dataset", learning_rate=1e-5, optim_name="SGD"):
     # load data
+    transform = transforms.Compose([transforms.Normalize(mean=[0.485, 0.456, 0.406],
+                                     std=[0.229, 0.224, 0.225])])
     if dataset == "shtu_dataset":
         print("train data loading..........")
-        shanghaitech_dataset = shtu_dataset.ShanghaiTechDataset(mode="train", zoom_size=zoom_size)
+        shanghaitech_dataset = shtu_dataset.ShanghaiTechDataset(mode="train", zoom_size=zoom_size, transform=transform)
         tech_loader = torch.utils.data.DataLoader(shanghaitech_dataset, batch_size=1, shuffle=True, num_workers=1)
         print("test data loading............")
-        test_data = shtu_dataset.ShanghaiTechDataset(mode="test")
+        test_data = shtu_dataset.ShanghaiTechDataset(mode="test", transform=transform)
         test_loader = torch.utils.data.DataLoader(test_data, batch_size=1, shuffle=False)
     elif dataset == "mall_dataset":
         print("train data loading..........")
@@ -55,13 +58,13 @@ def train(zoom_size=4, model="mcnn", dataset="shtu_dataset", learning_rate=1e-5,
     net = models[model]
     net = net.train().to(DEVICE)
     print("init optimizer..........")
-    optimizer = optim.Adam(filter(lambda p:p.requires_grad, net.parameters()), lr=learning_rate) if optim_name == "Adam" else \
-                optim.SGD(filter(lambda p: p.requires_grad, net.parameters()), lr=learning_rate, momentum=0.9, weight_decay=5*1e-4)
+    optimizer = optim.Adam(net.parameters(), lr=learning_rate) if optim_name == "Adam" else \
+                optim.SGD(net.parameters(), lr=learning_rate, momentum=0.95, weight_decay=5*1e-4)
     print("start to train net.....")
     sum_loss = 0.0
     epoch_index = 0
     min_mae = sys.maxsize
-    model_dir = model + "_" + dataset
+    model_dir = model + "_" + dataset + "test"
     writer = SummaryWriter('runs/'+model_dir)
     if not os.path.exists("./models/{model_name}".format(model_name=model)):
         os.mkdir("./models/{model_name}".format(model_name=model))
@@ -70,6 +73,7 @@ def train(zoom_size=4, model="mcnn", dataset="shtu_dataset", learning_rate=1e-5,
     for epoch in range(2000):
         for input, ground_truth in iter(tech_loader):
             input = input.float().to(DEVICE)
+            ground_truth = torch.unsqueeze(ground_truth, 0)
             ground_truth = ground_truth.float().to(DEVICE)
             output = net(input)
             loss = utils.get_loss(output, ground_truth)

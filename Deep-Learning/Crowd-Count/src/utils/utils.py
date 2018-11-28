@@ -19,10 +19,10 @@ def sa_loss(output, ground_truth):
 # loss between density and ground truth
 def get_loss(output, ground_truth):
     number = len(output)
-    loss_function = nn.MSELoss()
+    loss_function = nn.MSELoss(size_average=False)
     loss = 0.0
     for i in range(number):
-        output_density = output[i].view(output.size(2), output.size(3))
+        output_density = output[i]
         ground_truth_density = ground_truth[i]
         loss += loss_function(output_density, ground_truth_density)
 
@@ -38,13 +38,6 @@ def get_test_loss(output, ground_truth):
     mse = (sum_output - sum_gt) * (sum_output - sum_gt)
 
     return mae, mse
-
-
-# regression loss
-def get_sum_loss(output, ground_truth):
-    ground_truth = torch.sum(ground_truth)
-    output = torch.sum(output)
-    return ground_truth - output
 
 
 def weights_normal_init(model, dev=0.01):

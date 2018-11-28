@@ -14,9 +14,9 @@ import numpy as np
 def get_data(mode="train", zoom_size=4):
     # index train_image ground_truth
     data_path = "./data/shtu_dataset/preprocessed/{0}".format(mode) \
-        if mode == "train" else "./data/original/part_A_final/test_data/images/"
+        if mode == "train" else "./data/shtu_dataset/original/part_A_final/test_data/images/"
     ground_truth = "./data/shtu_dataset/preprocessed/{0}_density".format(mode) \
-        if mode == "train" else "./data/preprocessed/test_density/"
+        if mode == "train" else "./data/shtu_dataset/preprocessed/test_density/"
     data_files = [filename for filename in os.listdir(data_path) \
                  if os.path.isfile(os.path.join(data_path, filename))]
     result = []
@@ -29,8 +29,8 @@ def get_data(mode="train", zoom_size=4):
             img = rgb2gray(img)
         ht = img.shape[0]
         wd = img.shape[1]
-        ht_1 = (ht // 16) * 16
-        wd_1 = (wd // 16) * 16
+        ht_1 = (ht // zoom_size) * zoom_size
+        wd_1 = (wd // zoom_size) * zoom_size
         img = skimage.transform.resize(img, (wd_1, ht_1))
         img = np.reshape(img, (wd_1, ht_1, 1))
         img = np.transpose(img, (2, 0, 1))
