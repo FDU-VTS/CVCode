@@ -1,46 +1,64 @@
-import skimage.io
-from scipy.io import loadmat
-import numpy as np
-import matplotlib.pyplot as plt
-import scipy
-import math
-import skimage.io
-from skimage.color import rgb2gray
-import scipy.ndimage
-import torchvision
-from src.models import inception
+# -*- coding:utf-8 -*-
+# ------------------------
+# written by Songjian Chen
+# 2018-10
+# ------------------------
+from src.utils import utils
+from src.datasets import mall_dataset, shtu_dataset
+from src.models import csr_net, sa_net, tdf_net, mcnn, inception
 import torch
-from torchsummary import summary
-import cv2
+import torch.utils.data
+import torch.optim as optim
+import warnings
+import sys
+import math
+import numpy as np
+from tensorboardX import SummaryWriter
+import os
+from torchvision import transforms
+import torch.nn as nn
+warnings.filterwarnings("ignore")
+DEVICE = "cuda:3" if torch.cuda.is_available() else "cpu"
+models = {
+    'mcnn': utils.weights_normal_init(mcnn.MCNN(bn=False), dev=0.01),
+    'csr_net': csr_net.CSRNet(),
+    'sa_net': sa_net.SANet(input_channels=1, kernel_size=[1, 3, 5, 7], bias=True),
+    'tdf_net': utils.weights_normal_init(tdf_net.TDFNet(), dev=0.01),
+    'inception': inception.Inception()
+}
+"""
+ load data ->
+ init net ->
+ backward ->
+ test
+ zoom size: means reduction rate
+ results: mcnn | csr_net | sa_net | tdf_net
+ dataset: shtu_dataset | mall_dataset
+"""
 
+print("train data loading..........")
+mall_data = mall_dataset.MallDataset(img_path="./mall_dataset/frames/", point_path="./mall_dataset/mall_gt.mat",
+                                     zoom_size=1)
+tech_loader = torch.utils.data.DataLoader(mall_data, batch_size=1, shuffle=True, num_workers=4)
+print("test data loading............")
+mall_test_data = mall_data
+test_loader = torch.utils.data.DataLoader(mall_test_data, batch_size=1, shuffle=False, num_workers=4)
+model = models["sa_net"]
+# model = nn.DataParallel(model, device_ids=[3])
+model_path = "./models/sanet_best_model"
+model.load_state_dict(torch.load(model_path))
 
-def gaussian_filter_density(gt, pts):
-    density = np.zeros(gt.shape, dtype=np.float32)
-    gt_count = len(pts)
-    if gt_count == 0:
-        return density
+model.to(DEVICE)
+sum_mae = 0.0
+sum_mse = 0.0
 
-    leafsize = 2048
-    # build kdtree
-    tree = scipy.spatial.KDTree(pts.copy(), leafsize=leafsize)
-    # query kdtree
-    distances, locations = tree.query(pts, k=4)
+print("begin")
+for i, (input, ground_truth) in enumerate(test_loader):
+    input = input.float().to(DEVICE)
+    ground_truth = ground_truth.float().to(DEVICE)
+    output = model(input)
+    mae, mse = utils.get_test_loss(output, ground_truth)
+    sum_mae += float(mae)
+    sum_mse += float(mse)
 
-    for i, pt in enumerate(pts):
-        pt2d = np.zeros(gt.shape, dtype=np.float32)
-        try:
-            pt2d[int(math.floor(pt[1])), int(math.floor(pt[0]))] = 1.
-            print(gt.shape, math.floor(pt[1]), math.floor(pt[0]))
-        except:
-            pass
-        if gt_count > 1:
-            sigma = (distances[i][1] + distances[i][2] + distances[i][3]) * 0.1
-        else:
-            sigma = np.average(np.array(gt.shape)) / 2. / 2.  # case: 1 point
-        density += scipy.ndimage.filters.gaussian_filter(pt2d, sigma, mode='constant')
-    return density
-
-
-a = np.load("./data/preprocessed/test_density/IMG_1.npy")
-plt.imshow(a)
-plt.show()
+print("mae: {mae}, mse: {mse}".format(mae=sum_mae / len(test_loader), mse=math.sqrt(sum_mse / len(test_loader))))
