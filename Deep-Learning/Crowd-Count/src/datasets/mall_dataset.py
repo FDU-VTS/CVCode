@@ -74,12 +74,12 @@ class MallDataset(Dataset):
         wd = img.shape[1]
         ht_1 = (ht // 8) * 8
         wd_1 = (wd // 8) * 8
-        img = skimage.transform.resize(img, (wd_1, ht_1))
-        img = np.reshape(img, (wd_1, ht_1, 1))
+        img = cv2.resize(img, (wd_1, ht_1), interpolation=cv2.INTER_AREA)
+        img = img[:, :, np.newaxis]
         img = np.transpose(img, (2, 0, 1))
         ht_1 = ht_1 // self.zoom_size
         wd_1 = wd_1 // self.zoom_size
-        den = skimage.transform.resize(den, (wd_1, ht_1))
+        den = cv2.resize(den, (wd_1, ht_1), interpolation=cv2.INTER_AREA)
         den *= ((wd * ht) // (wd_1 * ht_1))
 
         return img, den

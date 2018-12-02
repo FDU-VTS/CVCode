@@ -9,6 +9,7 @@ import skimage.io
 import skimage.transform
 from skimage.color import rgb2gray
 import numpy as np
+import cv2
 
 
 def get_data(mode="train", zoom_size=4):
@@ -17,28 +18,26 @@ def get_data(mode="train", zoom_size=4):
         if mode == "train" else "./data/shtu_dataset/original/part_A_final/test_data/images/"
     ground_truth = "./data/shtu_dataset/preprocessed/{0}_density".format(mode) \
         if mode == "train" else "./data/shtu_dataset/preprocessed/test_density/"
-    data_files = [filename for filename in os.listdir(data_path) \
-                 if os.path.isfile(os.path.join(data_path, filename))]
+    data_files = [filename for filename in os.listdir(data_path) if os.path.isfile(os.path.join(data_path, filename))]
     result = []
     num_files = len(data_files)
     index = 0
-    for fname in data_files:
+    for file_name in data_files:
         # load images
-        img = skimage.io.imread(os.path.join(data_path, fname)).astype(np.float32)
+        img = skimage.io.imread(os.path.join(data_path, file_name)).astype(np.float32)
         if img.shape[-1] == 3:
             img = rgb2gray(img)
         ht = img.shape[0]
         wd = img.shape[1]
-        ht_1 = (ht // zoom_size) * zoom_size
-        wd_1 = (wd // zoom_size) * zoom_size
-        img = skimage.transform.resize(img, (wd_1, ht_1))
-        img = np.reshape(img, (wd_1, ht_1, 1))
-        img = np.transpose(img, (2, 0, 1))
+        ht_1 = (ht // 8) * 8
+        wd_1 = (wd // 8) * 8
+        img = cv2.resize(img, (wd_1, ht_1), interpolation=cv2.INTER_AREA)
+        img = img[:, :, np.newaxis]
         # load densities
-        den = np.load(os.path.join(ground_truth, os.path.splitext(fname)[0] + '.npy')).astype(np.float32)
+        den = np.load(os.path.join(ground_truth, os.path.splitext(file_name)[0] + '.npy')).astype(np.float32)
         ht_1 = ht_1 // zoom_size
         wd_1 = wd_1 // zoom_size
-        den = skimage.transform.resize(den, (wd_1, ht_1))
+        den = cv2.resize(den, (wd_1, ht_1), interpolation=cv2.INTER_AREA)
         den *= ((wd * ht) // (wd_1 * ht_1))
         index += 1
         # print load speed
