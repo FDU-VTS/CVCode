@@ -9,7 +9,7 @@ class BUNet(nn.Module):
     def __init__(self, bn=True):
         super(BUNet, self).__init__()
         self.feature1_1 = nn.Sequential(
-            ConvUnit(1, 16, 9, bn=bn),
+            ConvUnit(3, 16, 9, bn=bn),
             nn.MaxPool2d(2)
         )
         self.feature1_2 = ConvUnit(16, 32, 7, bn=bn)
@@ -19,7 +19,7 @@ class BUNet(nn.Module):
         )
         self.final1 = ConvUnit(16, 8, 7, bn=bn)
         self.feature2_1 = nn.Sequential(
-            ConvUnit(1, 24, 5, bn=bn),
+            ConvUnit(3, 24, 5, bn=bn),
             nn.MaxPool2d(2)
         )
         self.feature2_2 = ConvUnit(24, 48, 3, bn=bn)
