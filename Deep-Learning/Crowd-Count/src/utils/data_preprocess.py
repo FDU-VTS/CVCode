@@ -20,6 +20,8 @@ warnings.filterwarnings("ignore")
 
 
 def gaussian_kernel(image, points):
+    if image.shape[-1] == 3:
+        image = rgb2gray(image)
     image_density = np.zeros(image.shape)
     h, w = image_density.shape
 
@@ -49,6 +51,9 @@ def gaussian_kernel(image, points):
 
 
 def gaussian_filter_density(gt, pts, index):
+    if gt.shape[-1] == 3:
+        gt = rgb2gray(gt)
+    print("begin gaussian filter")
     density = np.zeros(gt.shape, dtype=np.float32)
     gt_count = len(pts)
     if gt_count == 0:
@@ -72,21 +77,22 @@ def gaussian_filter_density(gt, pts, index):
         else:
             sigma = np.average(np.array(gt.shape)) / 2. / 2. #case: 1 point
         density += scipy.ndimage.filters.gaussian_filter(pt2d, sigma, mode='constant')
+    print("end gaussian filter")
     return density
 
 
 def extract_data(mode="train", patch_number=9, part="A"):
     num_images = 300 if mode=="train" else 182
     # original path
-    dataset_path = "./data/shtu_dataset/original/part_{0}_final/".format(part)
+    dataset_path = "../../data/shtu_dataset/original/part_{0}_final/".format(part)
     mode_data = os.path.join(dataset_path, "{0}_data".format(mode))
     mode_images = os.path.join(mode_data, "images")
     mode_ground_truth = os.path.join(mode_data, "ground_truth")
     # preprocessed path
-    preprocessed_mode = "./data/shtu_dataset/preprocessed/{0}/".format(mode)
-    preprocessed_mode_density = "./data/shtu_dataset/preprocessed/{0}_density/".format(mode)
-    if not os.path.exists("./data/shtu_dataset/preprocessed/"):
-        os.mkdir("./data/shtu_dataset/preprocessed/")
+    preprocessed_mode = "../../data/shtu_dataset/preprocessed/{0}/".format(mode)
+    preprocessed_mode_density = "../../data/shtu_dataset/preprocessed/{0}_density/".format(mode)
+    if not os.path.exists("../../data/shtu_dataset/preprocessed/"):
+        os.mkdir("../../data/shtu_dataset/preprocessed/")
     if not os.path.exists(preprocessed_mode):
         os.mkdir(preprocessed_mode)
     if not os.path.exists(preprocessed_mode_density):
@@ -100,15 +106,14 @@ def extract_data(mode="train", patch_number=9, part="A"):
         ground_truth_path = os.path.join(mode_ground_truth, "GT_IMG_{0}.mat".format(index))
         image = skimage.io.imread(image_path)
         # convert to gray map
-        if image.shape[-1] == 3:
-            image = rgb2gray(image)
         mat = loadmat(ground_truth_path)
         image_info = mat["image_info"]
         ann_points = image_info[0][0][0][0][0] - 1
         # gaussian transfer
         image_density = gaussian_filter_density(image, ann_points, index)
         # split image into 9 patches where patch is 1/4 size
-        h, w = image.shape
+        h = image.shape[0]
+        w = image.shape[1]
         w_block = math.floor(w / 8)
         h_block = math.floor(h / 8)
         # get 0-3
@@ -135,9 +140,9 @@ def extract_data(mode="train", patch_number=9, part="A"):
 
 def extract_test_data(part="A"):
     num_images = 183 if part == "A" else 317
-    test_data_path = "./data/shtu_dataset/original/part_{part}_final/test_data/images".format(part=part)
-    test_ground_path = "./data/shtu_dataset/original/part_{part}_final/test_data/ground_truth".format(part=part)
-    test_density_path = "./data/shtu_dataset/preprocessed/test_density"
+    test_data_path = "../../data/shtu_dataset/original/part_{part}_final/test_data/images".format(part=part)
+    test_ground_path = "../../data/shtu_dataset/original/part_{part}_final/test_data/ground_truth".format(part=part)
+    test_density_path = "../../data/shtu_dataset/preprocessed/test_density"
     print("create directory........")
     if not os.path.exists(test_density_path):
         os.mkdir(test_density_path)
@@ -149,8 +154,6 @@ def extract_test_data(part="A"):
         ground_truth_path = os.path.join(test_ground_path, "GT_IMG_{0}.mat".format(index))
         # load mat and image
         image = skimage.io.imread(image_path)
-        if image.shape[-1] == 3:
-            image = rgb2gray(image)
         mat = loadmat(ground_truth_path)
         image_info = mat["image_info"]
         # ann_points: points pixels mean people
