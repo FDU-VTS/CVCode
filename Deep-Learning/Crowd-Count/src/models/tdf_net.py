@@ -54,7 +54,7 @@ class TDNet(nn.Module):
         self.BUNet = BUNet()
         self.conv = ConvUnit(40, 16, 3, bn=bn)
         self.pool = nn.MaxPool2d(2,return_indices=True)
-        self.unpool = nn.MaxUnpool2d(4)
+        self.unpool = nn.MaxUnpool2d(2)
         self.output2 = nn.Sequential(
             ConvUnit(96, 32, 3, bn=bn),
             ConvUnit(32, 16, 3, bn=bn),
@@ -71,6 +71,8 @@ class TDNet(nn.Module):
         out = self.conv(out_bu)
         out, indices = self.pool(out)
         out1 = self.unpool(out, indices)
+        out1 = torch.cat((out1, out1), -2)
+        out1 = torch.cat((out1, out1), -1)
         x = torch.cat((x1_2, out1, x2_2), 1)
         x1 = self.output2(x)
         x2 = self.output3(x)
