@@ -14,7 +14,7 @@ class MCNN(nn.Module):
         super(MCNN, self).__init__()
 
         self.column1 = nn.Sequential(
-            ConvUnit(1, 16, 9, bn=bn),
+            ConvUnit(3, 16, 9, bn=bn),
             nn.MaxPool2d(2),
             ConvUnit(16, 32, 7, bn=bn),
             nn.MaxPool2d(2),
@@ -23,7 +23,7 @@ class MCNN(nn.Module):
         )
 
         self.column2 = nn.Sequential(
-            ConvUnit(1, 20, 7, bn=bn),
+            ConvUnit(3, 20, 7, bn=bn),
             nn.MaxPool2d(2),
             ConvUnit(20, 40, 5, bn=bn),
             nn.MaxPool2d(2),
@@ -32,7 +32,7 @@ class MCNN(nn.Module):
         )
 
         self.column3 = nn.Sequential(
-            ConvUnit(1, 24, 5, bn=bn),
+            ConvUnit(3, 24, 5, bn=bn),
             nn.MaxPool2d(2),
             ConvUnit(24, 48, 3, bn=bn),
             nn.MaxPool2d(2),

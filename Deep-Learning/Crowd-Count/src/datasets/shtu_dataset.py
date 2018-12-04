@@ -7,7 +7,7 @@ from torch.utils.data import Dataset
 import os
 import skimage.io
 import skimage.transform
-from skimage.color import rgb2gray
+from skimage.color import grey2rgb
 import numpy as np
 import cv2
 
@@ -19,20 +19,20 @@ def get_data(mode="train", zoom_size=4):
     ground_truth = "./data/shtu_dataset/preprocessed/{0}_density".format(mode) \
         if mode == "train" else "./data/shtu_dataset/preprocessed/test_density/"
     data_files = [filename for filename in os.listdir(data_path) if os.path.isfile(os.path.join(data_path, filename))]
+    # double the training set
+    # data_files *= 2
     result = []
     num_files = len(data_files)
     index = 0
     for file_name in data_files:
         # load images
-        img = skimage.io.imread(os.path.join(data_path, file_name)).astype(np.float32)
-        if img.shape[-1] == 3:
-            img = rgb2gray(img)
+        img = skimage.io.imread(os.path.join(data_path, file_name), as_grey=False).astype(np.float32)
+        img = grey2rgb(img)
         ht = img.shape[0]
         wd = img.shape[1]
         ht_1 = (ht // 8) * 8
         wd_1 = (wd // 8) * 8
         img = cv2.resize(img, (wd_1, ht_1), interpolation=cv2.INTER_AREA)
-        img = img[:, :, np.newaxis]
         # load densities
         den = np.load(os.path.join(ground_truth, os.path.splitext(file_name)[0] + '.npy')).astype(np.float32)
         ht_1 = ht_1 // zoom_size

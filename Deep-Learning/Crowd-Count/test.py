@@ -20,6 +20,8 @@ import torch.nn as nn
 import skimage.io
 import cv2
 import skimage.transform
+from skimage.color import grey2rgb
+import glob
 warnings.filterwarnings("ignore")
 DEVICE = "cuda:3" if torch.cuda.is_available() else "cpu"
 """
@@ -32,10 +34,14 @@ DEVICE = "cuda:3" if torch.cuda.is_available() else "cpu"
  dataset: shtu_dataset | mall_dataset
 """
 
-path = "./data/shtu_dataset/original/part_A_final/train_data/images/IMG_1.jpg"
-img = skimage.io.imread(path)
-print(img.shape)
-img_1 = skimage.transform.resize(img, img.shape)
-print(img.shape)
-img = cv2.resize(img, (img.shape[0], img.shape[1]))
-print(img.shape)
+# path = "./data/shtu_dataset/original/part_A_final/train_data/images/IMG_1.jpg"
+
+paths = ["./data/shtu_dataset/preprocessed/train_density/", "./data/shtu_dataset/preprocessed/test_density/"]
+for path in paths:
+    files = glob.glob(os.path.join(path, "*.npy"))
+    for file in files:
+        a = np.load(file)
+        print(a.shape)
+        if len(a.shape)!=2:
+            b = np.mean(a, axis=2)
+            np.save(file, b)

@@ -17,7 +17,7 @@ from tensorboardX import SummaryWriter
 import os
 from torchvision import transforms
 warnings.filterwarnings("ignore")
-DEVICE = "cuda:0" if torch.cuda.is_available() else "cpu"
+DEVICE = "cuda:3" if torch.cuda.is_available() else "cpu"
 models = {
     'mcnn': utils.weights_normal_init(mcnn.MCNN(bn=False), dev=0.01),
     'csr_net': csr_net.CSRNet(),
@@ -36,17 +36,17 @@ models = {
 """
 
 
-def train(zoom_size=4, model="mcnn", dataset="shtu_dataset", learning_rate=1e-5, optim_name="SGD"):
+def train(zoom_size=4, model="mcnn", dataset="shtu_dataset", learning_rate=1e-5, optim_name="SGD", pretrain=False):
     # load data
-    # transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize(mean=[0.485, 0.456, 0.406],
-    #                                  std=[0.229, 0.224, 0.225])])
+    transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize(mean=[0.485, 0.456, 0.406],
+                                     std=[0.229, 0.224, 0.225])])
     # transform = transforms.Compose([transforms.ToTensor()])
     if dataset == "shtu_dataset":
         print("train data loading..........")
         shanghaitech_dataset = shtu_dataset.ShanghaiTechDataset(mode="train", zoom_size=zoom_size, transform=transform)
         tech_loader = torch.utils.data.DataLoader(shanghaitech_dataset, batch_size=1, shuffle=True, num_workers=1)
         print("test data loading............")
-        test_data = shtu_dataset.ShanghaiTechDataset(mode="test", transform=transforms.Compose([transforms.ToTensor()]))
+        test_data = shtu_dataset.ShanghaiTechDataset(mode="test", transform=transform)
         test_loader = torch.utils.data.DataLoader(test_data, batch_size=1, shuffle=False)
     elif dataset == "mall_dataset":
         print("train data loading..........")
@@ -57,8 +57,9 @@ def train(zoom_size=4, model="mcnn", dataset="shtu_dataset", learning_rate=1e-5,
         test_loader = torch.utils.data.DataLoader(mall_test_data, batch_size=1, shuffle=False, num_workers=4)
     print("init net...........")
     net = models[model]
-    model_path = "./models/{model}/best_{model}.pkl".format(model=model)
-    net.load_state_dict(torch.load(model_path))
+    if pretrain == True:
+        model_path = "./models/{model}/best_{model}.pkl".format(model=model)
+        net.load_state_dict(torch.load(model_path))
     net = net.train().to(DEVICE)
     print("init optimizer..........")
     optimizer = optim.Adam(net.parameters(), lr=learning_rate) if optim_name == "Adam" else \
@@ -77,8 +78,8 @@ def train(zoom_size=4, model="mcnn", dataset="shtu_dataset", learning_rate=1e-5,
         print("{0} epoches / 2000 epoches are done".format(epoch_index))
         for i, (input, ground_truth) in enumerate(tech_loader):
             input = input.to(DEVICE)
-            ground_truth = torch.unsqueeze(ground_truth, 0)
             ground_truth = ground_truth.to(DEVICE)
+            ground_truth = torch.unsqueeze(ground_truth, 0)
             output = net(input)
             loss = utils.get_loss(output, ground_truth)
             optimizer.zero_grad()
