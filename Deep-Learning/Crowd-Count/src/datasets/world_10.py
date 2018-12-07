@@ -7,75 +7,65 @@
 import numpy as np
 from scipy.io import loadmat
 import glob
-import cv2
 import torch
+import h5py
 from torch.utils.data import Dataset
 from skimage import io, color, transform
-import math, os
+import math, os, scipy
 import matplotlib.pyplot as plt
 
-
-def gaussian_kernel(image, points):
-    image_density = np.zeros(image.shape)
-    h, w = image_density.shape
-
-    if len(points) == 0:
-        return image_density
-
-    if len(points) == 1:
-        x1 = np.max(0, np.min(w, round(points[0, 0])))
-        y1 = np.max(0, np.min(h, round(points[0, 1])))
-        image_density[y1, x1] = 255
-        return image_density
-
-    for j in range(len(points)):
-        f_sz = 15
-        sigma = 5
-        kx = cv2.getGaussianKernel(f_sz, sigma=sigma)
-        ky = cv2.getGaussianKernel(f_sz, sigma=sigma)
-        H = np.multiply(kx, ky.T)
-        # convert x, y to int
-        x = min(w, max(0, abs(int(math.floor(points[j, 0])))))
-        y = min(h, max(0, abs(int(math.floor(points[j, 1])))))
-        if x > w or y > h:
-            continue
-        gap = int(math.floor(f_sz / 2))
-        x1 = x - gap if x - gap > 0 else 0
-        x2 = x + gap if x + gap < w else w - 1
-        y1 = y - gap if y - gap > 0 else 0
-        y2 = y + gap if y + gap < h else h - 1
-        # generate 2d gaussian kernel
-        kx = cv2.getGaussianKernel(y2 - y1 + 1, sigma=sigma)
-        ky = cv2.getGaussianKernel(x2 - x1 + 1, sigma=sigma)
-        gaussian = np.multiply(kx, ky.T)
-
-        image_density[y1:y2 + 1, x1:x2 + 1] = image_density[y1:y2 + 1, x1:x2 + 1] + gaussian
-
-    return image_density
+def gaussian_filter_density(gt, pts):
+    density = np.zeros(gt.shape, dtype=np.float32)
+    gt_count = len(pts)
+    if gt_count == 0:
+        return density
+    # print('generate density...')
+    for i, pt in enumerate(pts):
+        pt2d = np.zeros(gt.shape, dtype=np.float32)
+        pt2d[min(int(round(pt[1])), gt.shape[0]-1), min(int(round(pt[0])), gt.shape[1]-1)] = 1.
+        if gt_count > 1:
+            # print(round(pt[1]))
+            # sigma = (round(pt[1])/50+1)
+            sigma = 3
+        else:
+            sigma = np.average(np.array(gt.shape))/2./2. #case: 1 point
+        density += scipy.ndimage.filters.gaussian_filter(pt2d, sigma, mode='constant')
+    # print('done.')
+    return density
 
 
 class WorldExpoDataset(Dataset):
     def __init__(self, img_path, point_path):
         self.img_path = img_path
         self.point_path = point_path
+        wrong_data = ['200778_C10-03-S20100717083000000E20100717233000000_4_clip1_2.jpg',
+                      '200778_C10-03-S20100717083000000E20100717233000000_4_clip1_3.jpg',
+                      '200778_C10-03-S20100717083000000E20100717233000000_clip1_3.jpg',
+                      '500674_E05-03-S20100717083000000E20100717233000000_5_clip1_2.jpg',
+                      '600079_E06-02-S20100717083000000E20100717233000000_7_clip1_2.jpg']
+        for i in range(len(wrong_data)):
+            if os.path.exists(self.img_path + wrong_data[i]):
+                os.remove(self.img_path + wrong_data[i])
         self.img_list = glob.glob(self.img_path+'*.jpg')
 
-        # ground_truth__dict = loadmat(point_path)
-        # self.point = ground_truth__dict['frame'][0]
-
     def __len__(self):
-        print(len(self.img_list))
-        print(len(self.point_list))
-        # print(self.img_list)
-        # print("len", self.point.shape[0]-39)
-        # return self.point.shape[0]
+        return  len(self.img_list)
 
     def __getitem__(self, idx):
         image = io.imread(self.img_list[idx])
         gray = color.rgb2gray(image)
-        points = loadmat(self.point_path+self.img_list[idx].split('/')[3].split('_')[0]+'/'
-                         +self.img_list[idx].split('/')[3].replace('.jpg', '.mat'))['point_position']
-        density = gaussian_kernel(gray, points)
+        read_path = self.point_path+self.img_list[idx].split('/')[-1][:6]+'/'\
+                   +self.img_list[idx].split('/')[-1].replace('.jpg', '.mat')
+        input = open(read_path, 'rb')
+        check = float(str(input.read(10)).split('\'')[1].split(' ')[1])
+        input.close()
+        if check == 7.3:
+            points = np.array(h5py.File(read_path, 'r')['point_position'])
+            points = points.transpose()
+        else:
+            points = loadmat(read_path)['point_position']
+
+        density = gaussian_filter_density(gray, points)
         # density = cv2.resize(density, (80, 60), interpolation=cv2.INTER_AREA)
 
         # numpy_array
@@ -86,9 +76,87 @@ class WorldExpoDataset(Dataset):
         # torch.Size([3, 576, 720]) torch.Size([1, 576, 720])
         return image, density
 
+class WorldExpoTestDataset(Dataset):
+    def __init__(self, img_path, point_path, type):
+        # type 'scene1'|'scene2'|'scene3'|'scene4'|'scene5'
+        self.img_path = img_path
+        self.point_path = point_path
+        self.type = type
+        if type is 'scene1':
+            self.subdir = '104207/'
+        elif type is 'scene2':
+            self.subdir = '200608/'
+        elif type is 'scene3':
+            self.subdir = '200702/'
+        elif type is 'scene4':
+            self.subdir = '202201/'
+        elif type is 'scene5':
+            self.subdir = '500717/'
+        else:
+            return 1
+        wrong_data = ['104207/104207_1-04-S20100821071000000E20100821120000000_034550.jpg']
+        for i in range(len(wrong_data)):
+            if os.path.exists(self.img_path + wrong_data[i]):
+                os.remove(self.img_path + wrong_data[i])
+        self.img_list = glob.glob(self.img_path+self.subdir+'*.jpg')
+
+    def __len__(self):
+        return len(self.img_list)
+
+    def __getitem__(self, idx):
+        image = io.imread(self.img_list[idx])
+        read_path = self.point_path+self.subdir+self.img_list[idx].split('/')[-1].replace('.jpg', '.mat')
+        input = open(read_path, 'rb')
+        check = float(str(input.read(10)).split('\'')[1].split(' ')[1])
+        input.close()
+        if check == 7.3:
+            points = np.array(h5py.File(read_path, 'r')['point_position'])
+            points = points.transpose()
+        else:
+            points = loadmat(read_path)['point_position']
+
+        count = [len(points)]
+        count = torch.tensor(count, dtype=torch.double)
+        # torch.Size([1])
+
+        # numpy_array
+        image = torch.tensor(image)
+        image = image.permute(2, 0, 1)
+        # torch.Size([3, 576, 720]) torch.Size([1, 576, 720])
+        return image, count
+
+def average_scene(scene1, scene2, scene3, scene4, scene5):
+    return (scene1 + scene2 + scene3 + scene4 + scene5)/5
+
 if __name__ == "__main__":
     img_path = "./world_expo/train_frame/"
     point_path = './world_expo/train_label/'
     data = WorldExpoDataset(img_path, point_path)
-    a, b = data.__getitem__(3)
-    print(a.size(), b.size())
+    # img_path = "./world_expo/test_frame/"
+    # point_path = './world_expo/test_label/'
+    # data = WorldExpoTestDataset(img_path, point_path, 'scene1')
+    print(data.__len__())
+    for i in range(0, data.__len__()):
+        a, b = data.__getitem__(i)
+        print(i)
+        # a = a.permute(1, 2, 0)
+        # b = b.squeeze()
+        # a.numpy()
+        # b.numpy()
+        # plt.imshow(a)
+        # plt.show()
+        # time.sleep(1)
+        # plt.imshow(b, cmap='hot')
+        # plt.show()
+        # time.sleep(2)
+        # print(a.size(), b.size())
+        # print("___________________")
+    # a = a.permute(1, 2, 0)
+    # b = b.squeeze()
+    # a.numpy()
+    # b.numpy()
+    # plt.imshow(a)
+    # plt.show()
+    # plt.imshow(b, cmap='hot')
+    # plt.show()
+    # print(a.size(), b.size())
