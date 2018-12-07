@@ -8,10 +8,10 @@ case ${model_name} in
         python train.py mcnn 4 ${dataset} 1e-6 Adam
     ;;
     "csr_net")
-        python train.py csr_net 8 ${dataset} 1e-8 SGD
+        python train.py csr_net 8 ${dataset} 1e-7 SGD
     ;;
     "sa_net")
-        python train.py sa_net 1 ${dataset} 1e-4 Adam
+        python train.py sa_net 1 ${dataset} 1e-6 SGD
     ;;
     "tdf_net")
         python train.py tdf_net 4 ${dataset} 1e-7 SGD
