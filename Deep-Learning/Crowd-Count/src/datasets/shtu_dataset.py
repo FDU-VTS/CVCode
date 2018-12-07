@@ -25,20 +25,20 @@ def get_data(mode="train", zoom_size=4):
     num_files = len(data_files)
     index = 0
     for file_name in data_files:
-        # load images
+        # load test
         img = skimage.io.imread(os.path.join(data_path, file_name), as_grey=False).astype(np.float32)
         img = grey2rgb(img)
-        ht = img.shape[0]
-        wd = img.shape[1]
-        ht_1 = (ht // 8) * 8
-        wd_1 = (wd // 8) * 8
-        img = cv2.resize(img, (wd_1, ht_1), interpolation=cv2.INTER_AREA)
+        h = img.shape[0]
+        w = img.shape[1]
+        zoom_h = (h // 8) * 8
+        zoom_w = (w // 8) * 8
+        img = cv2.resize(img, (zoom_w, zoom_h), interpolation=cv2.INTER_AREA)
         # load densities
         den = np.load(os.path.join(ground_truth, os.path.splitext(file_name)[0] + '.npy')).astype(np.float32)
-        ht_1 = ht_1 // zoom_size
-        wd_1 = wd_1 // zoom_size
-        den = cv2.resize(den, (wd_1, ht_1), interpolation=cv2.INTER_AREA)
-        den *= ((wd * ht) // (wd_1 * ht_1))
+        zoom_h = zoom_h // zoom_size
+        zoom_w = zoom_w // zoom_size
+        den = cv2.resize(den, (zoom_w, zoom_h), interpolation=cv2.INTER_AREA)
+        den *= (h * w) / (zoom_h * zoom_w)
         index += 1
         # print load speed
         if index % 100 == 0 or index == len(data_files):
