@@ -19,7 +19,7 @@ def sa_loss(output, ground_truth):
 # loss between density and ground truth
 def get_loss(output, ground_truth):
     number = len(output)
-    loss_function = nn.MSELoss(size_average=False)
+    loss_function = nn.MSELoss()
     loss = 0.0
     for i in range(number):
         output_density = output[i]
@@ -30,10 +30,8 @@ def get_loss(output, ground_truth):
 
 
 def get_test_loss(output, ground_truth):
-    output_density = output[0].view(output.size(2), output.size(3))
-    ground_truth_density = ground_truth[0]
-    sum_output = torch.sum(output_density)
-    sum_gt = torch.sum(ground_truth_density)
+    sum_output = torch.sum(output)
+    sum_gt = torch.sum(ground_truth)
     mae = abs(sum_output - sum_gt)
     mse = (sum_output - sum_gt) * (sum_output - sum_gt)
 

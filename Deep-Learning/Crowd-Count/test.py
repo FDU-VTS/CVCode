@@ -22,6 +22,7 @@ import cv2
 import skimage.transform
 from skimage.color import grey2rgb
 import glob
+import matplotlib.pyplot as plt
 warnings.filterwarnings("ignore")
 DEVICE = "cuda:3" if torch.cuda.is_available() else "cpu"
 """
@@ -34,14 +35,20 @@ DEVICE = "cuda:3" if torch.cuda.is_available() else "cpu"
  dataset: shtu_dataset | mall_dataset
 """
 
-# path = "./data/shtu_dataset/original/part_A_final/train_data/images/IMG_1.jpg"
+# path = "./data/shtu_dataset/original/part_A_final/train_data/test/IMG_1.jpg"
 
-paths = ["./data/shtu_dataset/preprocessed/train_density/", "./data/shtu_dataset/preprocessed/test_density/"]
-for path in paths:
-    files = glob.glob(os.path.join(path, "*.npy"))
-    for file in files:
-        a = np.load(file)
-        print(a.shape)
-        if len(a.shape)!=2:
-            b = np.mean(a, axis=2)
-            np.save(file, b)
+paths = ["./data/shtu_dataset/preprocessed/train_density/", "./data/shtu_dataset/preprocessed/test_density/", "./data/shtu_dataset/preprocessed/test/"]
+images_path = paths[2]
+gt_path = paths[0]
+images_path = glob.glob(os.path.join(images_path, "*.jpg"))
+gt_path = glob.glob(os.path.join(gt_path, "*.npy"))
+for image_path in images_path:
+    gt = image_path.replace('test', 'test_density').replace('jpg', 'npy')
+    image = skimage.io.imread(image_path)
+    gt_image = np.load(gt)
+    plt.figure()
+    plt.subplot(1, 2, 1)
+    plt.imshow(image)
+    plt.subplot(1, 2, 2)
+    plt.imshow(gt_image)
+    plt.pause(2)

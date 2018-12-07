@@ -86,7 +86,7 @@ def extract_data(mode="train", patch_number=9, part="A"):
     # original path
     dataset_path = "../../data/shtu_dataset/original/part_{0}_final/".format(part)
     mode_data = os.path.join(dataset_path, "{0}_data".format(mode))
-    mode_images = os.path.join(mode_data, "images")
+    mode_images = os.path.join(mode_data, "test")
     mode_ground_truth = os.path.join(mode_data, "ground_truth")
     # preprocessed path
     preprocessed_mode = "../../data/shtu_dataset/preprocessed/{0}/".format(mode)
@@ -98,10 +98,10 @@ def extract_data(mode="train", patch_number=9, part="A"):
     if not os.path.exists(preprocessed_mode_density):
         os.mkdir(preprocessed_mode_density)
 
-    # convert images to gray-density for each
+    # convert test to gray-density for each
     for index in range(1, num_images + 1):
         if index % 10 == 9:
-            print("{0} images have been processed".format(index + 1))
+            print("{0} test have been processed".format(index + 1))
         image_path = os.path.join(mode_images, "IMG_{0}.jpg".format(index))
         ground_truth_path = os.path.join(mode_ground_truth, "GT_IMG_{0}.mat".format(index))
         image = skimage.io.imread(image_path)
@@ -114,8 +114,8 @@ def extract_data(mode="train", patch_number=9, part="A"):
         # split image into 9 patches where patch is 1/4 size
         h = image.shape[0]
         w = image.shape[1]
-        w_block = math.floor(w / 8)
-        h_block = math.floor(h / 8)
+        w_block = math.floor(w / 4)
+        h_block = math.floor(h / 4)
         # get 0-3
         for j in range(4):
             # 0, 1, 2, 3
@@ -140,7 +140,7 @@ def extract_data(mode="train", patch_number=9, part="A"):
 
 def extract_test_data(part="A"):
     num_images = 183 if part == "A" else 317
-    test_data_path = "../../data/shtu_dataset/original/part_{part}_final/test_data/images".format(part=part)
+    test_data_path = "../../data/shtu_dataset/original/part_{part}_final/test_data/test".format(part=part)
     test_ground_path = "../../data/shtu_dataset/original/part_{part}_final/test_data/ground_truth".format(part=part)
     test_density_path = "../../data/shtu_dataset/preprocessed/test_density"
     print("create directory........")
@@ -149,7 +149,7 @@ def extract_test_data(part="A"):
     print("begin to preprocess test data........")
     for index in range(1, num_images):
         if index % 10 == 0:
-            print("{num} images are done".format(num=index))
+            print("{num} test are done".format(num=index))
         image_path = os.path.join(test_data_path, "IMG_{0}.jpg".format(index))
         ground_truth_path = os.path.join(test_ground_path, "GT_IMG_{0}.mat".format(index))
         # load mat and image
@@ -159,7 +159,7 @@ def extract_test_data(part="A"):
         # ann_points: points pixels mean people
         # number: number of people in the image
         ann_points = image_info[0][0][0][0][0] - 1
-        # convert images to density
+        # convert test to density
         image_density = gaussian_filter_density(image, ann_points, index)
         np.save(os.path.join(test_density_path, "IMG_{0}.npy".format(index)), image_density)
 
