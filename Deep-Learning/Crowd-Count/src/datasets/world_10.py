@@ -24,8 +24,6 @@ def gaussian_filter_density(gt, pts):
         pt2d = np.zeros(gt.shape, dtype=np.float32)
         pt2d[min(int(round(pt[1])), gt.shape[0]-1), min(int(round(pt[0])), gt.shape[1]-1)] = 1.
         if gt_count > 1:
-            # print(round(pt[1]))
-            # sigma = (round(pt[1])/50+1)
             sigma = 3
         else:
             sigma = np.average(np.array(gt.shape))/2./2. #case: 1 point
@@ -66,14 +64,12 @@ class WorldExpoDataset(Dataset):
             points = loadmat(read_path)['point_position']
 
         density = gaussian_filter_density(gray, points)
-        # density = cv2.resize(density, (80, 60), interpolation=cv2.INTER_AREA)
 
         # numpy_array
         density = torch.tensor(density)
         density = torch.unsqueeze(density, 0)
         image = torch.tensor(image)
         image = image.permute(2, 0, 1)
-        # torch.Size([3, 576, 720]) torch.Size([1, 576, 720])
         return image, density
 
 class WorldExpoTestDataset(Dataset):
@@ -117,12 +113,8 @@ class WorldExpoTestDataset(Dataset):
 
         count = [len(points)]
         count = torch.tensor(count, dtype=torch.double)
-        # torch.Size([1])
-
-        # numpy_array
         image = torch.tensor(image)
         image = image.permute(2, 0, 1)
-        # torch.Size([3, 576, 720]) torch.Size([1, 576, 720])
         return image, count
 
 def average_scene(scene1, scene2, scene3, scene4, scene5):
@@ -132,31 +124,7 @@ if __name__ == "__main__":
     img_path = "./world_expo/train_frame/"
     point_path = './world_expo/train_label/'
     data = WorldExpoDataset(img_path, point_path)
-    # img_path = "./world_expo/test_frame/"
-    # point_path = './world_expo/test_label/'
-    # data = WorldExpoTestDataset(img_path, point_path, 'scene1')
     print(data.__len__())
     for i in range(0, data.__len__()):
         a, b = data.__getitem__(i)
         print(i)
-        # a = a.permute(1, 2, 0)
-        # b = b.squeeze()
-        # a.numpy()
-        # b.numpy()
-        # plt.imshow(a)
-        # plt.show()
-        # time.sleep(1)
-        # plt.imshow(b, cmap='hot')
-        # plt.show()
-        # time.sleep(2)
-        # print(a.size(), b.size())
-        # print("___________________")
-    # a = a.permute(1, 2, 0)
-    # b = b.squeeze()
-    # a.numpy()
-    # b.numpy()
-    # plt.imshow(a)
-    # plt.show()
-    # plt.imshow(b, cmap='hot')
-    # plt.show()
-    # print(a.size(), b.size())
