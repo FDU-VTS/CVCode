@@ -3,13 +3,23 @@
    - datasets
      - mall-dataset
      - shtu-dataset
+     - ucf-cc-50
+     - world-10
+     - ucsd
    - models
      - csr_net
      - mcnn
      - sa_net
      - tdf_net
      - pda_net
+     - aspp
+     - inception
    - data_preprocess(for shtu_dataset)
-   - utils(loss, init_weights ...)
+   - utils
+     - data_preprocess
+     - optical_flow
+     - ssim
+     - utils(loss, weight_init...)
+ - main.sh
  - test
  - train
