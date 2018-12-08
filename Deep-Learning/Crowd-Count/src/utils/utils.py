@@ -8,34 +8,46 @@ import torch.nn as nn
 import torch
 
 
-def sa_loss(output, ground_truth):
-    loss = get_loss(output, ground_truth)
-    ground_truth = torch.unsqueeze(ground_truth, 0)
-    ssim_loss = SSIM()
-    loss += 0.001 * (1 - ssim_loss(output, ground_truth))
-    return loss
+class LossFunction():
 
+    def __init__(self, model):
+        self.model = model
+        self.size_average = False if model == "csr_net" else True
 
-# loss between density and ground truth
-def get_loss(output, ground_truth):
-    number = len(output)
-    loss_function = nn.MSELoss()
-    loss = 0.0
-    for i in range(number):
-        output_density = output[i]
-        ground_truth_density = ground_truth[i]
-        loss += loss_function(output_density, ground_truth_density)
+    def _sa_loss(self, output, ground_truth):
+        loss = self._get_loss(output, ground_truth)
+        ground_truth = torch.unsqueeze(ground_truth, 0)
+        ssim_loss = SSIM()
+        loss += 0.001 * (1 - ssim_loss(output, ground_truth))
+        return loss
 
-    return loss / (2 * number)
+    # loss between density and ground truth
+    def _get_loss(self, output, ground_truth):
+        number = len(output)
+        loss_function = nn.MSELoss(size_average=self.size_average)
+        loss = 0.0
+        for i in range(number):
+            output_density = output[i]
+            ground_truth_density = ground_truth[i]
+            loss += loss_function(output_density, ground_truth_density)
 
+        return loss / (2 * number)
 
-def get_test_loss(output, ground_truth):
-    sum_output = torch.sum(output)
-    sum_gt = torch.sum(ground_truth)
-    mae = abs(sum_output - sum_gt)
-    mse = (sum_output - sum_gt) * (sum_output - sum_gt)
+    def _get_test_loss(self, output, ground_truth):
+        sum_output = torch.sum(output)
+        sum_gt = torch.sum(ground_truth)
+        mae = abs(sum_output - sum_gt)
+        mse = (sum_output - sum_gt) * (sum_output - sum_gt)
 
-    return mae, mse
+        return mae, mse
+
+    def __call__(self, output, ground_truth):
+        if self.model == "sa_net":
+            return self._sa_loss(output, ground_truth)
+        elif self.model == "test":
+            return self._get_test_loss(output, ground_truth)
+        else:
+            return self._get_loss(output, ground_truth)
 
 
 def weights_normal_init(model, dev=0.01):

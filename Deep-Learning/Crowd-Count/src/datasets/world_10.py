@@ -12,7 +12,7 @@ import h5py
 from torch.utils.data import Dataset
 from skimage import io, color, transform
 import math, os, scipy
-import matplotlib.pyplot as plt
+
 
 def gaussian_filter_density(gt, pts):
     density = np.zeros(gt.shape, dtype=np.float32)
@@ -26,9 +26,8 @@ def gaussian_filter_density(gt, pts):
         if gt_count > 1:
             sigma = 3
         else:
-            sigma = np.average(np.array(gt.shape))/2./2. #case: 1 point
+            sigma = np.average(np.array(gt.shape))/2./2.
         density += scipy.ndimage.filters.gaussian_filter(pt2d, sigma, mode='constant')
-    # print('done.')
     return density
 
 
@@ -47,13 +46,12 @@ class WorldExpoDataset(Dataset):
         self.img_list = glob.glob(self.img_path+'*.jpg')
 
     def __len__(self):
-        return  len(self.img_list)
+        return len(self.img_list)
 
     def __getitem__(self, idx):
         image = io.imread(self.img_list[idx])
         gray = color.rgb2gray(image)
-        read_path = self.point_path+self.img_list[idx].split('/')[-1][:6]+'/'\
-                   +self.img_list[idx].split('/')[-1].replace('.jpg', '.mat')
+        read_path = self.point_path+self.img_list[idx].split('/')[-1][:6]+'/'+self.img_list[idx].split('/')[-1].replace('.jpg', '.mat')
         input = open(read_path, 'rb')
         check = float(str(input.read(10)).split('\'')[1].split(' ')[1])
         input.close()
@@ -71,6 +69,7 @@ class WorldExpoDataset(Dataset):
         image = torch.tensor(image)
         image = image.permute(2, 0, 1)
         return image, density
+
 
 class WorldExpoTestDataset(Dataset):
     def __init__(self, img_path, point_path, type):
@@ -117,8 +116,10 @@ class WorldExpoTestDataset(Dataset):
         image = image.permute(2, 0, 1)
         return image, count
 
+
 def average_scene(scene1, scene2, scene3, scene4, scene5):
     return (scene1 + scene2 + scene3 + scene4 + scene5)/5
+
 
 if __name__ == "__main__":
     img_path = "./world_expo/train_frame/"
