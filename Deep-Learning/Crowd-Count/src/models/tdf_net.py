@@ -88,6 +88,7 @@ class TDFNet(nn.Module):
 
     def __init__(self, bn = True):
         super(TDFNet, self).__init__()
+        print("*****init TDF net*****")
         self.BU = BUNet()
         self.feature1_1 = self.BU.feature1_1
         self.feature2_1 = self.BU.feature2_1

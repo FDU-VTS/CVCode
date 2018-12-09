@@ -11,8 +11,8 @@ import torch
 class LossFunction():
 
     def __init__(self, model):
+        self.size_average = True
         self.model = model
-        self.size_average = False if model == "csr_net" else True
 
     def _sa_loss(self, output, ground_truth):
         loss = self._get_loss(output, ground_truth)
@@ -46,6 +46,9 @@ class LossFunction():
             return self._sa_loss(output, ground_truth)
         elif self.model == "test":
             return self._get_test_loss(output, ground_truth)
+        elif self.model == "csr_net" or self.model == "aspp":
+            self.size_average = False
+            return self._get_loss(output, ground_truth)
         else:
             return self._get_loss(output, ground_truth)
 

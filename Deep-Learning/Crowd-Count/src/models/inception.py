@@ -11,6 +11,7 @@ class Inception(nn.Module):
 
     def __init__(self, num_classes=1000, aux_logits=True, transform_input=False, pretrained=True):
         super(Inception, self).__init__()
+        print("*****init Inception*****")
         self.aux_logits = aux_logits
         self.transform_input = transform_input
         self.Conv2d_1a_3x3 = ConvUnit(1, 32, kernel_size=3)

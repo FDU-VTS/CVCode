@@ -86,7 +86,7 @@ def extract_data(mode="train", patch_number=9, part="A"):
     # original path
     dataset_path = "../../data/shtu_dataset/original/part_{0}_final/".format(part)
     mode_data = os.path.join(dataset_path, "{0}_data".format(mode))
-    mode_images = os.path.join(mode_data, "test")
+    mode_images = os.path.join(mode_data, "images")
     mode_ground_truth = os.path.join(mode_data, "ground_truth")
     # preprocessed path
     preprocessed_mode = "../../data/shtu_dataset/preprocessed/{0}/".format(mode)
@@ -111,36 +111,40 @@ def extract_data(mode="train", patch_number=9, part="A"):
         ann_points = image_info[0][0][0][0][0] - 1
         # gaussian transfer
         image_density = gaussian_filter_density(image, ann_points, index)
+
+        np.save(os.path.join(preprocessed_mode_density, "{0}.npy".format(index)), image_density)
+        skimage.io.imsave(os.path.join(preprocessed_mode, "{0}.jpg".format(index)), image)
+
         # split image into 9 patches where patch is 1/4 size
-        h = image.shape[0]
-        w = image.shape[1]
-        w_block = math.floor(w / 4)
-        h_block = math.floor(h / 4)
-        # get 0-3
-        for j in range(4):
-            # 0, 1, 2, 3
-            x = j % 2
-            y = j // 2
-            w_b = w // 2
-            h_b = h // 2
-            image_sample = image[y * h_b:(y + 1) * h_b, x * w_b:(x + 1) * w_b]
-            image_density_sample = image_density[y * h_b:(y + 1) * h_b, x * w_b:(x + 1) * w_b]
-            img_idx = "{0}_{1}".format(index, j)
-            np.save(os.path.join(preprocessed_mode_density, "{0}.npy".format(img_idx)), image_density_sample)
-            skimage.io.imsave(os.path.join(preprocessed_mode, "{0}.jpg".format(img_idx)), image_sample)
-        for j in range(4, patch_number):
-            x = math.floor((w - 2 * w_block) * random.random() + w_block)
-            y = math.floor((h - 2 * h_block) * random.random() + h_block)
-            image_sample = image[y - h_block:y + h_block, x - w_block:x + w_block]
-            image_density_sample = image_density[y - h_block:y + h_block, x - w_block:x + w_block]
-            img_idx = "{0}_{1}".format(index, j)
-            np.save(os.path.join(preprocessed_mode_density, "{0}.npy".format(img_idx)), image_density_sample)
-            skimage.io.imsave(os.path.join(preprocessed_mode, "{0}.jpg".format(img_idx)), image_sample)
+        # h = image.shape[0]
+        # w = image.shape[1]
+        # w_block = math.floor(w / 4)
+        # h_block = math.floor(h / 4)
+        # # get 0-3
+        # for j in range(4):
+        #     # 0, 1, 2, 3
+        #     x = j % 2
+        #     y = j // 2
+        #     w_b = w // 2
+        #     h_b = h // 2
+        #     image_sample = image[y * h_b:(y + 1) * h_b, x * w_b:(x + 1) * w_b]
+        #     image_density_sample = image_density[y * h_b:(y + 1) * h_b, x * w_b:(x + 1) * w_b]
+        #     img_idx = "{0}_{1}".format(index, j)
+        #     np.save(os.path.join(preprocessed_mode_density, "{0}.npy".format(img_idx)), image_density_sample)
+        #     skimage.io.imsave(os.path.join(preprocessed_mode, "{0}.jpg".format(img_idx)), image_sample)
+        # for j in range(4, patch_number):
+        #     x = math.floor((w - 2 * w_block) * random.random() + w_block)
+        #     y = math.floor((h - 2 * h_block) * random.random() + h_block)
+        #     image_sample = image[y - h_block:y + h_block, x - w_block:x + w_block]
+        #     image_density_sample = image_density[y - h_block:y + h_block, x - w_block:x + w_block]
+        #     img_idx = "{0}_{1}".format(index, j)
+        #     np.save(os.path.join(preprocessed_mode_density, "{0}.npy".format(img_idx)), image_density_sample)
+        #     skimage.io.imsave(os.path.join(preprocessed_mode, "{0}.jpg".format(img_idx)), image_sample)
 
 
 def extract_test_data(part="A"):
     num_images = 183 if part == "A" else 317
-    test_data_path = "../../data/shtu_dataset/original/part_{part}_final/test_data/test".format(part=part)
+    test_data_path = "../../data/shtu_dataset/original/part_{part}_final/test_data/images".format(part=part)
     test_ground_path = "../../data/shtu_dataset/original/part_{part}_final/test_data/ground_truth".format(part=part)
     test_density_path = "../../data/shtu_dataset/preprocessed/test_density"
     print("create directory........")

@@ -12,6 +12,7 @@ from src.utils import utils
 class CSRNet(nn.Module):
     def __init__(self, load_weights=False):
         super(CSRNet, self).__init__()
+        print("*****init CSR net*****")
         self.seen = 0
         self.frontend_feat = [64, 64, 'M', 128, 128, 'M', 256, 256, 256, 'M', 512, 512, 512]
         self.backend_feat = [512, 512, 512, 256, 128, 64]
@@ -33,7 +34,7 @@ class CSRNet(nn.Module):
 
 def make_layers(cfg, in_channels=3, batch_norm=False, dilation=False):
     if dilation:
-        d_rate = 4
+        d_rate = 2
     else:
         d_rate = 1
     layers = []

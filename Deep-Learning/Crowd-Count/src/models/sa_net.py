@@ -25,9 +25,6 @@ class ConvScale(nn.Module):
         self.conv_result = nn.Conv2d(4, 1, 1, stride=1, padding=0, bias=bias)
 
     def forward(self, input):
-        # input.double()finish ci
-        # print("forward size", input.dtype)
-        # print("start ConvScale")
         output1 = self.conv1(input)
         if self.input_channels == 1:
             output2 = self.conv2(input)
@@ -37,15 +34,12 @@ class ConvScale(nn.Module):
                 return nn.ReLU()(self.conv_result(torch.cat([output1, output2, output3, output4], -3)))
             return nn.ReLU()(torch.cat([output1, output2, output3, output4], -3))
 
-        # print("finish step 1")
         output2 = self.conv2_1(input)
         output3 = self.conv3_1(input)
         output4 = self.conv4_1(input)
-        # print("finish step 2")
         output2 = self.conv2(output2)
         output3 = self.conv3(output3)
         output4 = self.conv4(output4)
-        # print("finish ConvScale")
         if self.output_channels == 1:
             return nn.ReLU()(self.conv_result(torch.cat([output1, output2, output3, output4], -3)))
         return nn.ReLU()(torch.cat([output1, output2, output3, output4], -3))
@@ -54,7 +48,7 @@ class ConvScale(nn.Module):
 class SANet(nn.Module):
     def __init__(self, input_channels, kernel_size, bias=True):
         super(SANet, self).__init__()
-
+        print("*****init SA net*****")
         self.input_channels = input_channels
         self.bias = bias
         self.kernel_size = kernel_size

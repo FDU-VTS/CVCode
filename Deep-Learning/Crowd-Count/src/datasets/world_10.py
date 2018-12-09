@@ -125,7 +125,3 @@ if __name__ == "__main__":
     img_path = "./world_expo/train_frame/"
     point_path = './world_expo/train_label/'
     data = WorldExpoDataset(img_path, point_path)
-    print(data.__len__())
-    for i in range(0, data.__len__()):
-        a, b = data.__getitem__(i)
-        print(i)

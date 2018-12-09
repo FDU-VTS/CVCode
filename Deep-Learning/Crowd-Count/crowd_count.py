@@ -5,7 +5,7 @@
 # ------------------------
 from src.utils import utils
 from src.datasets import mall_dataset, shtu_dataset
-from src.models import csr_net, sa_net, tdf_net, mcnn, inception
+from src.models import csr_net, sa_net, tdf_net, mcnn, inception, aspp
 import torch
 import torch.utils.data
 import torch.optim as optim
@@ -23,7 +23,8 @@ models = {
     'csr_net': csr_net.CSRNet(),
     'sa_net': sa_net.SANet(input_channels=3, kernel_size=[1, 3, 5, 7], bias=True),
     'tdf_net': utils.weights_normal_init(tdf_net.TDFNet(), dev=0.01),
-    'inception': inception.Inception()
+    'inception': inception.Inception(),
+    'aspp': aspp.ASPP()
 }
 
 
@@ -133,4 +134,4 @@ if __name__ == "__main__":
     print("start....")
     _, model, zoom_size, dataset, learning_rate, optim_name = sys.argv
     print("results: {0}, zoom_size: {1}".format(model, zoom_size))
-    train(zoom_size=zoom_size, model=model, dataset=dataset, learning_rate=learning_rate, optim_name=optim_name)
+    train(zoom_size=int(zoom_size), model=str(model), dataset=str(dataset), learning_rate=float(learning_rate), optim_name=str(optim_name))

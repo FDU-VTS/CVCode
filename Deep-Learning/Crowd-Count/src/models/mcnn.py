@@ -12,7 +12,7 @@ class MCNN(nn.Module):
 
     def __init__(self, bn=False):
         super(MCNN, self).__init__()
-
+        print("*****init MCNN net*****")
         self.column1 = nn.Sequential(
             ConvUnit(3, 16, 9, bn=bn),
             nn.MaxPool2d(2),

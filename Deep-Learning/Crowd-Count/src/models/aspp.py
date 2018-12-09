@@ -7,17 +7,18 @@
 import torch.nn as nn
 from torchvision import models
 from src.utils import utils
+import torch
 
 
-class CSRNet(nn.Module):
+class ASPP(nn.Module):
     def __init__(self, load_weights=False):
-        super(CSRNet, self).__init__()
-        self.seen = 0
+        super(ASPP, self).__init__()
+        print("*****init ASPP net*****")
         self.frontend_feat = [64, 64, 'M', 128, 128, 'M', 256, 256, 256, 'M', 512, 512, 512]
-        self.backend_feat = [512, 512, 512, 256, 128, 64]
         self.frontend = make_layers(self.frontend_feat)
-        self.backend = make_layers(self.backend_feat, in_channels=512, dilation=True)
-        self.output_layer = nn.Conv2d(64, 1, kernel_size=1)
+        self.backend_feat = [486, 486, 486, 243, 81, 27]
+        self.backend = make_fusion(self.backend_feat)
+        self.output_layer = nn.Conv2d(27, 1, kernel_size=1)
         if not load_weights:
             mod = models.vgg16(pretrained=True)
             utils.weights_normal_init(self)
@@ -31,9 +32,39 @@ class CSRNet(nn.Module):
         return x
 
 
+class Fusion(nn.Module):
+
+    def __init__(self, in_channels, out_channels):
+        super(Fusion, self).__init__()
+        self.in_channels = in_channels
+        self.out_channels = out_channels
+        self.dilate1_1 = self._dilate_conv(1)
+        self.dilate2_1 = self._dilate_conv(2)
+        self.dilate3_1 = self._dilate_conv(3)
+
+    def forward(self, x):
+        x1 = self.dilate1_1(x)
+        x2 = self.dilate2_1(x)
+        x3 = self.dilate3_1(x)
+        return torch.cat((x1, x2, x3), 1)
+
+    def _dilate_conv(self, rate):
+        out = self.out_channels // 3
+        return nn.Conv2d(in_channels=self.in_channels, out_channels=out, kernel_size=3, padding=rate, dilation=rate)
+
+
+def make_fusion(cfg, in_channels=512):
+    layers = []
+    for v in cfg:
+        fusion = Fusion(in_channels, v)
+        layers += [fusion, nn.ReLU(inplace=True)]
+        in_channels = v
+    return nn.Sequential(*layers)
+
+
 def make_layers(cfg, in_channels=3, batch_norm=False, dilation=False):
     if dilation:
-        d_rate = 3
+        d_rate = 2
     else:
         d_rate = 1
     layers = []
