@@ -245,3 +245,4 @@ if __name__ == "__main__":
     # img_path = "./world_expo/test_frame/"
     # point_path = './world_expo/test_label/'
     # data = WorldExpoTestDataset(img_path, point_path, 'scene1')
+
