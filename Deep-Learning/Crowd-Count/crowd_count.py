@@ -4,7 +4,7 @@
 # 2018-10
 # ------------------------
 from src.utils import utils
-from src.datasets import mall_dataset, shtu_dataset
+from src.datasets import mall_dataset, shtu_dataset, shtu_dataset_csr
 from src.models import csr_net, sa_net, tdf_net, mcnn, inception, aspp
 import torch
 import torch.utils.data
@@ -33,10 +33,10 @@ def _load_dataset(dataset, zoom_size=4,transform=None):
     test_loader = None
     if dataset == "shtu_dataset":
         print("train data loading..........")
-        shanghaitech_dataset = shtu_dataset.ShanghaiTechDataset(mode="train", zoom_size=zoom_size, transform=transform)
+        shanghaitech_dataset = shtu_dataset_csr.ShanghaiTechDataset(mode="train", zoom_size=zoom_size, transform=transform)
         train_loader = torch.utils.data.DataLoader(shanghaitech_dataset, batch_size=1, shuffle=True, num_workers=4)
         print("test data loading............")
-        test_data = shtu_dataset.ShanghaiTechDataset(mode="test", transform=transform)
+        test_data = shtu_dataset_csr.ShanghaiTechDataset(mode="test", transform=transform)
         test_loader = torch.utils.data.DataLoader(test_data, batch_size=1, shuffle=False, num_workers=4)
     elif dataset == "mall_dataset":
         print("train data loading..........")
@@ -59,10 +59,12 @@ def _init_optimizer(optimizer_name, parameters, learning_rate, momentum=0.95, we
     return optimizer
 
 
-def train(zoom_size=4, model="mcnn", dataset="shtu_dataset", learning_rate=1e-5, optim_name="SGD", pretrain=False, display=False):
+def train(zoom_size=4, model="mcnn", dataset="shtu_dataset", learning_rate=1e-5, optim_name="SGD", pretrain=False, display=True):
     # load data
-    transform = transforms.Compose([transforms.ToTensor()])
-    train_loader, test_loader = _load_dataset(dataset, zoom_size=zoom_size,transform=transform)
+    transform = transforms.Compose([transforms.ToTensor(),
+                                    transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+                                    ])
+    train_loader, test_loader = _load_dataset(dataset, zoom_size=zoom_size, transform=transform)
     # init network
     net = models[model]
     if pretrain:
@@ -72,12 +74,9 @@ def train(zoom_size=4, model="mcnn", dataset="shtu_dataset", learning_rate=1e-5,
     # init optimizer
     optimizer = _init_optimizer(optim_name, net.parameters(), learning_rate)
     print("start to train net.....")
-    epoch_index = 0
-    min_mae = sys.maxsize
-    min_mse = sys.maxsize
     model_dir = model + "_" + dataset
     # whether tensorboardX is needed
-    writer = SummaryWriter('runs/'+model_dir) if display else None
+    writer = SummaryWriter('runs/' + model_dir) if display else None
     # create model catalog
     if not os.path.exists("./models/{model_name}".format(model_name=model)):
         os.mkdir("./models/{model_name}".format(model_name=model))
@@ -85,13 +84,15 @@ def train(zoom_size=4, model="mcnn", dataset="shtu_dataset", learning_rate=1e-5,
     # and keep the best one
     train_loss = utils.LossFunction(model)
     test_loss = utils.LossFunction("test")
+    min_mae = sys.maxsize
+    min_mse = sys.maxsize
     for epoch in range(2000):
         sum_loss = 0.0
         temp_loss = 0.0
-        print("{0} epoches / 2000 epoches are done".format(epoch_index))
+        print("{0} epoches / 2000 epoches are done".format(epoch))
         for i, (input, ground_truth) in enumerate(train_loader):
             input = input.to(DEVICE)
-            ground_truth = ground_truth.to(DEVICE)
+            ground_truth = ground_truth.float().to(DEVICE)
             ground_truth = torch.unsqueeze(ground_truth, 0)
             output = net(input)
             loss = train_loss(output, ground_truth)
@@ -108,7 +109,7 @@ def train(zoom_size=4, model="mcnn", dataset="shtu_dataset", learning_rate=1e-5,
         sum_mse = 0.0
         for input, ground_truth in iter(test_loader):
             input = input.to(DEVICE)
-            ground_truth = ground_truth.to(DEVICE)
+            ground_truth = ground_truth.float().to(DEVICE)
             output = net(input)
             mae, mse = test_loss(output, ground_truth)
             sum_mae += float(mae)
@@ -120,12 +121,11 @@ def train(zoom_size=4, model="mcnn", dataset="shtu_dataset", learning_rate=1e-5,
         print("mae:%.1f, mse:%.1f, best_mae:%.1f, best_mse:%.1f" % (sum_mae / len(test_loader),
                                                                     math.sqrt(sum_mse / len(test_loader)), min_mae, min_mse))
         print("sum loss is {0}".format(sum_loss / len(test_loader)))
-        epoch_index += 1
         if display:
-            writer.add_scalar(model_dir + "/loss", np.asarray(sum_loss / len(test_loader), dtype=np.float32), epoch_index)
-            writer.add_scalar(model_dir + "/mae", np.asarray(sum_mae / len(test_loader)), epoch_index)
-            writer.add_scalar(model_dir + "/mse", np.asarray(math.sqrt(sum_mse / len(test_loader))), epoch_index)
-            if epoch_index + 1 == 2000:
+            writer.add_scalar(model_dir + "/loss", np.asarray(sum_loss / len(test_loader), dtype=np.float32), epoch)
+            writer.add_scalar(model_dir + "/mae", np.asarray(sum_mae / len(test_loader)), epoch)
+            writer.add_scalar(model_dir + "/mse", np.asarray(math.sqrt(sum_mse / len(test_loader))), epoch)
+            if epoch + 1 == 2000:
                 writer.close()
 
 

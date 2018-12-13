@@ -4,169 +4,65 @@
 # 2018-10
 # ------------------------
 
-import os
-import skimage.io
-from skimage.color import rgb2gray
-import skimage.transform
-from scipy.io import loadmat
+import h5py
+import scipy.io as io
+import glob
+from matplotlib import pyplot as plt
+from scipy.ndimage.filters import gaussian_filter
 import scipy
-import scipy.ndimage
-import numpy as np
-import cv2
 import math
 import warnings
-import random
+import os
+import numpy as np
 warnings.filterwarnings("ignore")
 
 
-def gaussian_kernel(image, points):
-    if image.shape[-1] == 3:
-        image = rgb2gray(image)
-    image_density = np.zeros(image.shape)
-    h, w = image_density.shape
-
-    if len(points) == 0:
-        return image_density
-
-    for j in range(len(points)):
-        f_sz = 15
-        sigma = 4.0
-        # convert x, y to int
-        x = min(w, max(0, int(points[j, 0])))
-        y = min(h, max(0, int(points[j, 1])))
-        gap = f_sz // 2
-
-        x1 = x - gap if x - gap > 0 else 0
-        x2 = x + gap if x + gap < w else w - 1
-        y1 = y - gap if y - gap > 0 else 0
-        y2 = y + gap if y + gap < h else h - 1
-        # generate 2d gaussian kernel
-        kx = cv2.getGaussianKernel(y2 - y1 + 1, sigma=sigma)
-        ky = cv2.getGaussianKernel(x2 - x1 + 1, sigma=sigma)
-        gaussian = np.multiply(kx, ky.T)
-
-        image_density[y1:y2 + 1, x1:x2 + 1] += gaussian
-
-    return image_density
-
-
-def gaussian_filter_density(gt, pts, index):
-    if gt.shape[-1] == 3:
-        gt = rgb2gray(gt)
-    print("begin gaussian filter")
+#this is borrowed from https://github.com/davideverona/deep-crowd-counting_crowdnet
+def gaussian_filter_density(gt):
     density = np.zeros(gt.shape, dtype=np.float32)
-    gt_count = len(pts)
+    gt_count = np.count_nonzero(gt)
     if gt_count == 0:
         return density
-    
+    pts = np.array(list(zip(np.nonzero(gt)[1], np.nonzero(gt)[0])))
     leafsize = 2048
     # build kdtree
     tree = scipy.spatial.KDTree(pts.copy(), leafsize=leafsize)
     # query kdtree
     distances, locations = tree.query(pts, k=4)
 
+    print('generate density...')
     for i, pt in enumerate(pts):
         pt2d = np.zeros(gt.shape, dtype=np.float32)
-        try:
-            pt2d[int(math.floor(pt[1])), int(math.floor(pt[0]))] = 1.
-        except:
-            print("IMG_{0}".format(index))
-            print(gt.shape, math.floor(pt[1]), math.floor(pt[0]))
+        pt2d[math.floor(pt[1]), math.floor(pt[0])] = 1.
         if gt_count > 1:
-            sigma = (distances[i][1] + distances[i][2] + distances[i][3]) * 0.1
+            sigma = (distances[i][1]+distances[i][2]+distances[i][3])*0.1
         else:
-            sigma = np.average(np.array(gt.shape)) / 2. / 2. #case: 1 point
+            sigma = np.average(np.array(gt.shape))/2./2. #case: 1 point
         density += scipy.ndimage.filters.gaussian_filter(pt2d, sigma, mode='constant')
-    print("end gaussian filter")
+    print('done.')
     return density
 
 
-def extract_data(mode="train", patch_number=9, part="A"):
-    num_images = 300 if mode=="train" else 182
-    # original path
-    dataset_path = "../../data/shtu_dataset/original/part_{0}_final/".format(part)
-    mode_data = os.path.join(dataset_path, "{0}_data".format(mode))
-    mode_images = os.path.join(mode_data, "images")
-    mode_ground_truth = os.path.join(mode_data, "ground_truth")
-    # preprocessed path
-    preprocessed_mode = "../../data/shtu_dataset/preprocessed/{0}/".format(mode)
-    preprocessed_mode_density = "../../data/shtu_dataset/preprocessed/{0}_density/".format(mode)
-    if not os.path.exists("../../data/shtu_dataset/preprocessed/"):
-        os.mkdir("../../data/shtu_dataset/preprocessed/")
-    if not os.path.exists(preprocessed_mode):
-        os.mkdir(preprocessed_mode)
-    if not os.path.exists(preprocessed_mode_density):
-        os.mkdir(preprocessed_mode_density)
+#set the root to the Shanghai dataset you download
+root = '../../data/shtu_dataset/original/'
 
-    # convert test to gray-density for each
-    for index in range(1, num_images + 1):
-        if index % 10 == 9:
-            print("{0} test have been processed".format(index + 1))
-        image_path = os.path.join(mode_images, "IMG_{0}.jpg".format(index))
-        ground_truth_path = os.path.join(mode_ground_truth, "GT_IMG_{0}.mat".format(index))
-        image = skimage.io.imread(image_path)
-        # convert to gray map
-        mat = loadmat(ground_truth_path)
-        image_info = mat["image_info"]
-        ann_points = image_info[0][0][0][0][0] - 1
-        # gaussian transfer
-        image_density = gaussian_filter_density(image, ann_points, index)
+#now generate the ShanghaiA's ground truth
+part_A_train = os.path.join(root,'part_A_final/train_data','images')
+part_A_test = os.path.join(root,'part_A_final/test_data','images')
+part_B_train = os.path.join(root,'part_B_final/train_data','images')
+part_B_test = os.path.join(root,'part_B_final/test_data','images')
+path_sets = [part_A_train,part_A_test]
 
-        np.save(os.path.join(preprocessed_mode_density, "{0}.npy".format(index)), image_density)
-        skimage.io.imsave(os.path.join(preprocessed_mode, "{0}.jpg".format(index)), image)
-
-        # split image into 9 patches where patch is 1/4 size
-        # h = image.shape[0]
-        # w = image.shape[1]
-        # w_block = math.floor(w / 4)
-        # h_block = math.floor(h / 4)
-        # # get 0-3
-        # for j in range(4):
-        #     # 0, 1, 2, 3
-        #     x = j % 2
-        #     y = j // 2
-        #     w_b = w // 2
-        #     h_b = h // 2
-        #     image_sample = image[y * h_b:(y + 1) * h_b, x * w_b:(x + 1) * w_b]
-        #     image_density_sample = image_density[y * h_b:(y + 1) * h_b, x * w_b:(x + 1) * w_b]
-        #     img_idx = "{0}_{1}".format(index, j)
-        #     np.save(os.path.join(preprocessed_mode_density, "{0}.npy".format(img_idx)), image_density_sample)
-        #     skimage.io.imsave(os.path.join(preprocessed_mode, "{0}.jpg".format(img_idx)), image_sample)
-        # for j in range(4, patch_number):
-        #     x = math.floor((w - 2 * w_block) * random.random() + w_block)
-        #     y = math.floor((h - 2 * h_block) * random.random() + h_block)
-        #     image_sample = image[y - h_block:y + h_block, x - w_block:x + w_block]
-        #     image_density_sample = image_density[y - h_block:y + h_block, x - w_block:x + w_block]
-        #     img_idx = "{0}_{1}".format(index, j)
-        #     np.save(os.path.join(preprocessed_mode_density, "{0}.npy".format(img_idx)), image_density_sample)
-        #     skimage.io.imsave(os.path.join(preprocessed_mode, "{0}.jpg".format(img_idx)), image_sample)
-
-
-def extract_test_data(part="A"):
-    num_images = 183 if part == "A" else 317
-    test_data_path = "../../data/shtu_dataset/original/part_{part}_final/test_data/images".format(part=part)
-    test_ground_path = "../../data/shtu_dataset/original/part_{part}_final/test_data/ground_truth".format(part=part)
-    test_density_path = "../../data/shtu_dataset/preprocessed/test_density"
-    print("create directory........")
-    if not os.path.exists(test_density_path):
-        os.mkdir(test_density_path)
-    print("begin to preprocess test data........")
-    for index in range(1, num_images):
-        if index % 10 == 0:
-            print("{num} test are done".format(num=index))
-        image_path = os.path.join(test_data_path, "IMG_{0}.jpg".format(index))
-        ground_truth_path = os.path.join(test_ground_path, "GT_IMG_{0}.mat".format(index))
-        # load mat and image
-        image = skimage.io.imread(image_path)
-        mat = loadmat(ground_truth_path)
-        image_info = mat["image_info"]
-        # ann_points: points pixels mean people
-        # number: number of people in the image
-        ann_points = image_info[0][0][0][0][0] - 1
-        # convert test to density
-        image_density = gaussian_filter_density(image, ann_points, index)
-        np.save(os.path.join(test_density_path, "IMG_{0}.npy".format(index)), image_density)
-
-
-extract_data()
-extract_test_data()
+for path in path_sets:
+    for img_path in glob.glob(os.path.join(path, '*.jpg')):
+        print(img_path)
+        mat = io.loadmat(img_path.replace('.jpg','.mat').replace('images','ground_truth').replace('IMG_','GT_IMG_'))
+        img= plt.imread(img_path)
+        k = np.zeros((img.shape[0],img.shape[1]))
+        gt = mat["image_info"][0,0][0,0][0]
+        for i in range(0,len(gt)):
+            if int(gt[i][1])<img.shape[0] and int(gt[i][0])<img.shape[1]:
+                k[int(gt[i][1]),int(gt[i][0])]=1
+        k = gaussian_filter_density(k)
+        with h5py.File(img_path.replace('.jpg','.h5').replace('images','ground_truth'), 'w') as hf:
+                hf['density'] = k

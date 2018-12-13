@@ -13,14 +13,14 @@ import torch
 class ASPP(nn.Module):
     def __init__(self, load_weights=False):
         super(ASPP, self).__init__()
-        print("*****init ASPP net*****")
+        self.seen = 0
         self.frontend_feat = [64, 64, 'M', 128, 128, 'M', 256, 256, 256, 'M', 512, 512, 512]
+        self.backend_feat = [512, 512, 512, 256, 128, 64]
         self.frontend = make_layers(self.frontend_feat)
-        self.backend_feat = [486, 486, 486, 243, 81, 27]
-        self.backend = make_fusion(self.backend_feat)
-        self.output_layer = nn.Conv2d(27, 1, kernel_size=1)
+        self.backend = make_layers(self.backend_feat, in_channels=512, dilation=True)
+        self.output_layer = nn.Conv2d(64, 1, kernel_size=1)
         if not load_weights:
-            mod = models.vgg16(pretrained=True)
+            mod = models.vgg16(pretrained = True)
             utils.weights_normal_init(self)
             for i in range(len(self.frontend.state_dict().items())):
                 list(self.frontend.state_dict().items())[i][1].data[:] = list(mod.state_dict().items())[i][1].data[:]
@@ -41,15 +41,16 @@ class Fusion(nn.Module):
         self.dilate1_1 = self._dilate_conv(1)
         self.dilate2_1 = self._dilate_conv(2)
         self.dilate3_1 = self._dilate_conv(3)
+        self.dilate4_1 = self._dilate_conv(4)
 
     def forward(self, x):
         x1 = self.dilate1_1(x)
         x2 = self.dilate2_1(x)
         x3 = self.dilate3_1(x)
-        return torch.cat((x1, x2, x3), 1)
+        return torch.cat((x1, x2, x3, x4), 1)
 
     def _dilate_conv(self, rate):
-        out = self.out_channels // 3
+        out = self.out_channels // 4
         return nn.Conv2d(in_channels=self.in_channels, out_channels=out, kernel_size=3, padding=rate, dilation=rate)
 
 

@@ -15,6 +15,7 @@ import os, scipy
 import cv2
 import threading
 
+
 def gaussian_filter_density(gt, pts):
     density = np.zeros(gt.shape, dtype=np.float32)
     gt_count = len(pts)
@@ -75,20 +76,21 @@ def extract_gt(img_path, point_path, img_list):
         t.join()
 
 
-
 class WorldExpoDataset(Dataset):
-    def __init__(self, img_path, point_path):
+    def __init__(self, img_path, point_path, transform=None):
         self.img_path = img_path
         self.point_path = point_path
+        self.transform = transform
         wrong_data = ['200778_C10-03-S20100717083000000E20100717233000000_4_clip1_2.jpg',
                       '200778_C10-03-S20100717083000000E20100717233000000_4_clip1_3.jpg',
                       '200778_C10-03-S20100717083000000E20100717233000000_clip1_3.jpg',
                       '500674_E05-03-S20100717083000000E20100717233000000_5_clip1_2.jpg',
-                      '600079_E06-02-S20100717083000000E20100717233000000_7_clip1_2.jpg']
+                      '600079_E06-02-S20100717083000000E20100717233000000_7_clip1_2.jpg',
+                      '100270_A02HiRD36-01-S20100626080000000E20100626233000000_new.split.157_2.jpg']
         for i in range(len(wrong_data)):
             if os.path.exists(self.img_path + wrong_data[i]):
                 os.remove(self.img_path + wrong_data[i])
-        self.img_list = glob.glob(self.img_path+'*.jpg')
+        self.img_list = glob.glob(self.img_path + '*.jpg')
 
         if not os.path.exists(self.img_path + 'ground_truth/'):
             print("Start extract")
@@ -98,29 +100,35 @@ class WorldExpoDataset(Dataset):
             print("Already extract")
 
     def __len__(self):
-        return  len(self.img_list)
+        return len(self.img_list)
 
     def __getitem__(self, idx):
-        image = io.imread(self.img_list[idx])
+        # image = io.imread(self.img_list[idx])
+        image = np.load(self.img_path + 'flow/' + self.img_list[idx].split('/')[-1].replace('.jpg', '.npy'))
 
         density = np.load(self.img_path + 'ground_truth/' + self.img_list[idx].split('/')[-1].replace('.jpg', '.npy'))
-        # resize ground truth
-        # density = cv2.resize(density, (0, 0), fx=0.125, fy=0.125, interpolation=cv2.INTER_AREA)
+        density = cv2.resize(density, (0, 0), fx=0.125, fy=0.125, interpolation=cv2.INTER_CUBIC)*64
 
         # numpy_array
         density = torch.tensor(density)
         density = torch.unsqueeze(density, 0)
-        image = torch.tensor(image)
-        image = image.permute(2, 0, 1)
-        # torch.Size([3, 576, 720]) torch.Size([1, 576, 720])
+        if self.transform is not None:
+            image = self.transform(image)
+            image = torch.tensor(image)
+        else:
+            image = torch.tensor(image)
+            image = image.permute(2, 0, 1)
+        #  return: torch.Size([3, 576, 720]) torch.Size([1, 576, 720])
         return image, density
 
+
 class WorldExpoTestDataset(Dataset):
-    def __init__(self, img_path, point_path, type):
-        # type 'scene1'|'scene2'|'scene3'|'scene4'|'scene5'
+    def __init__(self, img_path, point_path, transform=None, type='scene1'):
+        # type  'scene1'|'scene2'|'scene3'|'scene4'|'scene5'
         self.img_path = img_path
         self.point_path = point_path
         self.type = type
+        self.transform = transform
         if type is 'scene1':
             self.subdir = '104207/'
         elif type is 'scene2':
@@ -137,14 +145,15 @@ class WorldExpoTestDataset(Dataset):
         for i in range(len(wrong_data)):
             if os.path.exists(self.img_path + wrong_data[i]):
                 os.remove(self.img_path + wrong_data[i])
-        self.img_list = glob.glob(self.img_path+self.subdir+'*.jpg')
+        self.img_list = glob.glob(self.img_path + self.subdir + '*.jpg')
 
     def __len__(self):
         return len(self.img_list)
 
     def __getitem__(self, idx):
-        image = io.imread(self.img_list[idx])
-        read_path = self.point_path+self.subdir+self.img_list[idx].split('/')[-1].replace('.jpg', '.mat')
+        # image = io.imread(self.img_list[idx])
+        image = np.load(self.img_path + 'flow/' + self.img_list[idx].split('/')[-1].replace('.jpg', '.npy'))
+        read_path = self.point_path + self.subdir + self.img_list[idx].split('/')[-1].replace('.jpg', '.mat')
         input = open(read_path, 'rb')
         check = float(str(input.read(10)).split('\'')[1].split(' ')[1])
         input.close()
@@ -155,26 +164,84 @@ class WorldExpoTestDataset(Dataset):
             points = loadmat(read_path)['point_position']
 
         count = [len(points)]
+        # count type: torch.Size([1])
         count = torch.tensor(count, dtype=torch.double)
-        # torch.Size([1])
 
         # numpy_array
-        image = torch.tensor(image)
-        image = image.permute(2, 0, 1)
-        # torch.Size([3, 576, 720]) torch.Size([1, 576, 720])
+        if self.transform is not None:
+            image = self.transform(image)
+            image = torch.tensor(image)
+        else:
+            image = torch.tensor(image)
+            image = image.permute(2, 0, 1)
+        # return：torch.Size([3, 576, 720]) torch.Size([1, 576, 720])
+        return image, count
+
+class WorldExpoTestDataset(Dataset):
+    def __init__(self, img_path, point_path, transform=None, type='scene1'):
+        # type  'scene1'|'scene2'|'scene3'|'scene4'|'scene5'
+        self.img_path = img_path
+        self.point_path = point_path
+        self.type = type
+        self.transform = transform
+        if type is 'scene1':
+            self.subdir = '104207/'
+        elif type is 'scene2':
+            self.subdir = '200608/'
+        elif type is 'scene3':
+            self.subdir = '200702/'
+        elif type is 'scene4':
+            self.subdir = '202201/'
+        elif type is 'scene5':
+            self.subdir = '500717/'
+        else:
+            return 1
+        wrong_data = ['104207/104207_1-04-S20100821071000000E20100821120000000_034550.jpg']
+        for i in range(len(wrong_data)):
+            if os.path.exists(self.img_path + wrong_data[i]):
+                os.remove(self.img_path + wrong_data[i])
+        self.img_list = glob.glob(self.img_path + self.subdir + '*.jpg')
+
+    def __len__(self):
+        return len(self.img_list)
+
+    def __getitem__(self, idx):
+        # image = io.imread(self.img_list[idx])
+        image = np.load(self.img_path + 'flow/' + self.img_list[idx].split('/')[-1].replace('.jpg', '.npy'))
+        read_path = self.point_path + self.subdir + self.img_list[idx].split('/')[-1].replace('.jpg', '.mat')
+        input = open(read_path, 'rb')
+        check = float(str(input.read(10)).split('\'')[1].split(' ')[1])
+        input.close()
+        if check == 7.3:
+            points = np.array(h5py.File(read_path, 'r')['point_position'])
+            points = points.transpose()
+        else:
+            points = loadmat(read_path)['point_position']
+
+        count = [len(points)]
+        # count type: torch.Size([1])
+        count = torch.tensor(count, dtype=torch.double)
+
+        # numpy_array
+        if self.transform is not None:
+            image = self.transform(image)
+            image = torch.tensor(image)
+        else:
+            image = torch.tensor(image)
+            image = image.permute(2, 0, 1)
+        # return：torch.Size([3, 576, 720]) torch.Size([1, 576, 720])
         return image, count
 
 def average_scene(scene1, scene2, scene3, scene4, scene5):
-    return (scene1 + scene2 + scene3 + scene4 + scene5)/5
+    return (scene1 + scene2 + scene3 + scene4 + scene5) / 5
+
 
 if __name__ == "__main__":
     img_path = "./world_expo/train_frame/"
     point_path = './world_expo/train_label/'
     data = WorldExpoDataset(img_path, point_path)
+
+
     # img_path = "./world_expo/test_frame/"
     # point_path = './world_expo/test_label/'
     # data = WorldExpoTestDataset(img_path, point_path, 'scene1')
-    print(data.__len__())
-    for i in range(0, data.__len__()):
-        a, b = data.__getitem__(i)
-        print(i)

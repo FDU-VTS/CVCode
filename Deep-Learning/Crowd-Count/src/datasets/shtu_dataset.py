@@ -10,17 +10,19 @@ import skimage.transform
 from skimage.color import grey2rgb
 import numpy as np
 import cv2
+import random
 
 
 def get_data(mode="train", zoom_size=4):
     # index train_image ground_truth
-    data_path = "./data/shtu_dataset/preprocessed/{0}".format(mode) \
-        if mode == "train" else "./data/shtu_dataset/original/part_A_final/test_data/images/"
-    ground_truth = "./data/shtu_dataset/preprocessed/{0}_density".format(mode) \
-        if mode == "train" else "./data/shtu_dataset/preprocessed/test_density/"
+    data_path = "./data/shtu_dataset_temp/preprocessed/{0}".format(mode) \
+        if mode == "train" else "./data/shtu_dataset_temp/original/part_A_final/test_data/images/"
+    ground_truth = "./data/shtu_dataset_temp/preprocessed/{0}_density".format(mode) \
+        if mode == "train" else "./data/shtu_dataset_temp/preprocessed/test_density/"
     data_files = [filename for filename in os.listdir(data_path) if os.path.isfile(os.path.join(data_path, filename))]
     # double the training set
-    data_files *= 2
+    if mode == "train":
+        data_files *= 2
     result = []
     num_files = len(data_files)
     index = 0
