@@ -26,9 +26,10 @@ class ShanghaiTechDataset(Dataset):
 
     def __getitem__(self, item):
         img, den = self.dataset[item]
+        show_img = img
         if self.transform is not None:
             img = self.transform(img)
-        return img, den
+        return img, den, show_img
 
     def load_data(self):
         result = []

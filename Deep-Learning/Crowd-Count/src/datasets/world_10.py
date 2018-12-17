@@ -14,6 +14,7 @@ from skimage import io, color
 import os, scipy
 import cv2
 import threading
+from torchvision import transforms
 
 
 def gaussian_filter_density(gt, pts):
@@ -77,9 +78,10 @@ def extract_gt(img_path, point_path, img_list):
 
 
 class WorldExpoDataset(Dataset):
-    def __init__(self, img_path, point_path, transform=None):
+    def __init__(self, img_path, point_path, data_type = 'RGB', transform=None):
         self.img_path = img_path
         self.point_path = point_path
+        self.data_type = data_type
         self.transform = transform
         wrong_data = ['200778_C10-03-S20100717083000000E20100717233000000_4_clip1_2.jpg',
                       '200778_C10-03-S20100717083000000E20100717233000000_4_clip1_3.jpg',
@@ -103,8 +105,13 @@ class WorldExpoDataset(Dataset):
         return len(self.img_list)
 
     def __getitem__(self, idx):
-        # image = io.imread(self.img_list[idx])
-        image = np.load(self.img_path + 'flow/' + self.img_list[idx].split('/')[-1].replace('.jpg', '.npy'))
+        if self.data_type == 'RGB':
+            image = io.imread(self.img_list[idx])
+        elif self.data_type == 'flow':
+            image = np.load(self.img_path + 'flow/' + self.img_list[idx].split('/')[-1].replace('.jpg', '.npy'))
+        else:
+            image = io.imread(self.img_list[idx])
+            flow = np.load(self.img_path + 'flow/' + self.img_list[idx].split('/')[-1].replace('.jpg', '.npy'))
 
         density = np.load(self.img_path + 'ground_truth/' + self.img_list[idx].split('/')[-1].replace('.jpg', '.npy'))
         density = cv2.resize(density, (0, 0), fx=0.125, fy=0.125, interpolation=cv2.INTER_CUBIC)*64
@@ -112,21 +119,33 @@ class WorldExpoDataset(Dataset):
         # numpy_array
         density = torch.tensor(density)
         density = torch.unsqueeze(density, 0)
+        image = roi(image, self.point_path, self.img_list[idx])
         if self.transform is not None:
             image = self.transform(image)
             image = torch.tensor(image)
+            if self.data_type == 'all':
+                flow = roi(flow, self.point_path, self.img_list[idx])
+                flow = self.transform(flow)
+                flow = torch.tensor(flow)
         else:
             image = torch.tensor(image)
             image = image.permute(2, 0, 1)
+            if self.data_type == 'all':
+                flow = roi(flow, self.point_path, self.img_list[idx])
+                flow = torch.tensor(flow)
+                flow = flow.permute(2, 0, 1)
         #  return: torch.Size([3, 576, 720]) torch.Size([1, 576, 720])
+        if self.data_type == 'all':
+            return image, flow, density
         return image, density
 
 
 class WorldExpoTestDataset(Dataset):
-    def __init__(self, img_path, point_path, transform=None, type='scene1'):
+    def __init__(self, img_path, point_path, transform=None, data_type='RGB', type='scene1'):
         # type  'scene1'|'scene2'|'scene3'|'scene4'|'scene5'
         self.img_path = img_path
         self.point_path = point_path
+        self.data_type = data_type
         self.type = type
         self.transform = transform
         if type is 'scene1':
@@ -151,8 +170,13 @@ class WorldExpoTestDataset(Dataset):
         return len(self.img_list)
 
     def __getitem__(self, idx):
-        # image = io.imread(self.img_list[idx])
-        image = np.load(self.img_path + 'flow/' + self.img_list[idx].split('/')[-1].replace('.jpg', '.npy'))
+        if self.data_type == 'RGB':
+            image = io.imread(self.img_list[idx])
+        elif self.data_type == 'flow':
+            image = np.load(self.img_path + 'flow/' + self.img_list[idx].split('/')[-1].replace('.jpg', '.npy'))
+        else:
+            image = io.imread(self.img_list[idx])
+            flow = np.load(self.img_path + 'flow/' + self.img_list[idx].split('/')[-1].replace('.jpg', '.npy'))
         read_path = self.point_path + self.subdir + self.img_list[idx].split('/')[-1].replace('.jpg', '.mat')
         input = open(read_path, 'rb')
         check = float(str(input.read(10)).split('\'')[1].split(' ')[1])
@@ -166,74 +190,61 @@ class WorldExpoTestDataset(Dataset):
         count = [len(points)]
         # count type: torch.Size([1])
         count = torch.tensor(count, dtype=torch.double)
-
+        image = roi(image, self.point_path, self.img_list[idx])
         # numpy_array
         if self.transform is not None:
             image = self.transform(image)
+            # print(type(image))
             image = torch.tensor(image)
+            if self.data_type == 'all':
+                flow = roi(flow, self.point_path, self.img_list[idx])
+                flow = self.transform(flow)
+                flow = torch.tensor(flow)
         else:
             image = torch.tensor(image)
             image = image.permute(2, 0, 1)
+            if self.data_type == 'all':
+                flow = roi(flow, self.point_path, self.img_list[idx])
+                flow = torch.tensor(flow)
+                flow = flow.permute(2, 0, 1)
         # return：torch.Size([3, 576, 720]) torch.Size([1, 576, 720])
+        if self.data_type == 'all':
+            return image, flow, count
         return image, count
 
-class WorldExpoTestDataset(Dataset):
-    def __init__(self, img_path, point_path, transform=None, type='scene1'):
-        # type  'scene1'|'scene2'|'scene3'|'scene4'|'scene5'
-        self.img_path = img_path
-        self.point_path = point_path
-        self.type = type
-        self.transform = transform
-        if type is 'scene1':
-            self.subdir = '104207/'
-        elif type is 'scene2':
-            self.subdir = '200608/'
-        elif type is 'scene3':
-            self.subdir = '200702/'
-        elif type is 'scene4':
-            self.subdir = '202201/'
-        elif type is 'scene5':
-            self.subdir = '500717/'
-        else:
-            return 1
-        wrong_data = ['104207/104207_1-04-S20100821071000000E20100821120000000_034550.jpg']
-        for i in range(len(wrong_data)):
-            if os.path.exists(self.img_path + wrong_data[i]):
-                os.remove(self.img_path + wrong_data[i])
-        self.img_list = glob.glob(self.img_path + self.subdir + '*.jpg')
-
-    def __len__(self):
-        return len(self.img_list)
-
-    def __getitem__(self, idx):
-        # image = io.imread(self.img_list[idx])
-        image = np.load(self.img_path + 'flow/' + self.img_list[idx].split('/')[-1].replace('.jpg', '.npy'))
-        read_path = self.point_path + self.subdir + self.img_list[idx].split('/')[-1].replace('.jpg', '.mat')
-        input = open(read_path, 'rb')
-        check = float(str(input.read(10)).split('\'')[1].split(' ')[1])
-        input.close()
-        if check == 7.3:
-            points = np.array(h5py.File(read_path, 'r')['point_position'])
-            points = points.transpose()
-        else:
-            points = loadmat(read_path)['point_position']
-
-        count = [len(points)]
-        # count type: torch.Size([1])
-        count = torch.tensor(count, dtype=torch.double)
-
-        # numpy_array
-        if self.transform is not None:
-            image = self.transform(image)
-            image = torch.tensor(image)
-        else:
-            image = torch.tensor(image)
-            image = image.permute(2, 0, 1)
-        # return：torch.Size([3, 576, 720]) torch.Size([1, 576, 720])
-        return image, count
 
 def average_scene(scene1, scene2, scene3, scene4, scene5):
     return (scene1 + scene2 + scene3 + scene4 + scene5) / 5
+
+def roi(image, point_path, img_list):
+    read_path = point_path + img_list.split('/')[-1][:6] + '/' \
+                + 'roi.mat'
+    input = open(read_path, 'rb')
+    check = float(str(input.read(10)).split('\'')[1].split(' ')[1])
+    input.close()
+    if check == 7.3:
+        x = np.array(h5py.File(read_path, 'r')['maskVerticesXCoordinates'])
+        x = x.transpose()
+        y = np.array(h5py.File(read_path, 'r')['maskVerticesYCoordinates'])
+        y = y.transpose()
+        points = np.concatenate((x, y), axis=1)
+        points = points[np.newaxis, :, :]
+    else:
+        x = loadmat(read_path)['maskVerticesXCoordinates']
+        y = loadmat(read_path)['maskVerticesYCoordinates']
+
+        points = np.concatenate((x, y), axis=1)
+        points = points[np.newaxis, :, :]
+
+    points = np.array(points, dtype=np.int32)
+
+    im = np.zeros(image.shape[:2], dtype="uint8")
+    cv2.polylines(im, points, True, 255)
+    cv2.fillPoly(im, points, 255)
+
+    masked = cv2.bitwise_and(image, image, mask=im)
+
+    return masked
 
 
 if __name__ == "__main__":
@@ -245,4 +256,3 @@ if __name__ == "__main__":
     # img_path = "./world_expo/test_frame/"
     # point_path = './world_expo/test_label/'
     # data = WorldExpoTestDataset(img_path, point_path, 'scene1')
-

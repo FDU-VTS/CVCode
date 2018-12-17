@@ -7,13 +7,13 @@
 import h5py
 import scipy.io as io
 import glob
-from matplotlib import pyplot as plt
 from scipy.ndimage.filters import gaussian_filter
 import scipy
 import math
 import warnings
 import os
 import numpy as np
+import skimage.io
 warnings.filterwarnings("ignore")
 
 
@@ -57,12 +57,14 @@ for path in path_sets:
     for img_path in glob.glob(os.path.join(path, '*.jpg')):
         print(img_path)
         mat = io.loadmat(img_path.replace('.jpg','.mat').replace('images','ground_truth').replace('IMG_','GT_IMG_'))
-        img= plt.imread(img_path)
+        img = skimage.io.imread(img_path)
         k = np.zeros((img.shape[0],img.shape[1]))
         gt = mat["image_info"][0,0][0,0][0]
         for i in range(0,len(gt)):
             if int(gt[i][1])<img.shape[0] and int(gt[i][0])<img.shape[1]:
                 k[int(gt[i][1]),int(gt[i][0])]=1
         k = gaussian_filter_density(k)
+        for i in range(4):
+            pass
         with h5py.File(img_path.replace('.jpg','.h5').replace('images','ground_truth'), 'w') as hf:
                 hf['density'] = k

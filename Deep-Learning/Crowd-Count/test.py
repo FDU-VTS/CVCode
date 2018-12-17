@@ -4,7 +4,7 @@
 # 2018-10
 # ------------------------
 from src.utils import utils
-from src.datasets import mall_dataset, shtu_dataset
+from src.datasets import mall_dataset, shtu_dataset, shtu_dataset_test
 from src.models import csr_net, sa_net, tdf_net, mcnn, inception, aspp
 import torch
 import torch.utils.data
@@ -23,6 +23,7 @@ import skimage.transform
 from skimage.color import grey2rgb
 import glob
 import matplotlib.pyplot as plt
+import re
 warnings.filterwarnings("ignore")
 DEVICE = "cuda:3" if torch.cuda.is_available() else "cpu"
 """
@@ -36,6 +37,53 @@ DEVICE = "cuda:3" if torch.cuda.is_available() else "cpu"
 """
 
 
-net = aspp.ASPP()
-a = torch.zeros(1, 3, 800, 800)
-b = net(a)
+# path = "./data/world_expo/test_frame/flow"
+# flows = glob.glob(os.path.join(path, "*.npy"))
+# p = re.compile(r'flow/(\d*)_')
+# for flow in flows:
+#     file = p.findall(flow)[0]
+#     image_path = flow.replace("npy", "jpg").replace("flow", file)
+#     img = skimage.io.imread(image_path)
+#     a = np.load(flow)
+#     plt.figure()
+#     plt.subplot(1, 2, 1)
+#     plt.imshow(img)
+#     plt.subplot(1, 2, 2)
+#     plt.imshow(a)
+#     plt.pause(0.5)
+
+
+transform = transforms.Compose([transforms.ToTensor(),
+                                transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+                                ])
+test_data = shtu_dataset_test.ShanghaiTechDataset(mode="test", transform=transform)
+test_loader = torch.utils.data.DataLoader(test_data, batch_size=1, shuffle=False, num_workers=4)
+net = csr_net.CSRNet()
+net.load_state_dict(torch.load("./models/csr_net/best_csr_net.pkl", map_location='cpu'))
+net = net.eval()
+sum_mae = 0.0
+sum_mse = 0.0
+test_loss = utils.LossFunction("test")
+save_path = "./results/"
+for index, (input, ground_truth, input_cp) in enumerate(test_loader):
+    input = input.to(DEVICE)
+    ground_truth = ground_truth.float().to(DEVICE)
+    output = net(input)
+    mae, mse = test_loss(output, ground_truth)
+    print("mae:{0}, mse:{1}".format(mae, math.sqrt(mse)))
+    sum_mae += float(mae)
+    sum_mse += float(mse)
+    input_cp = input_cp[0].numpy()
+    ground_truth = ground_truth[0].detach().numpy()
+    output = output[0, 0].detach().numpy()
+    plt.subplot(1, 3, 1)
+    plt.imshow(input_cp)
+    plt.title(str(mae.detach().numpy()))
+    plt.subplot(1, 3, 2)
+    plt.imshow(ground_truth, cmap='hot')
+    plt.title("gt: " + str(np.sum(ground_truth)))
+    plt.subplot(1, 3, 3)
+    plt.imshow(output, cmap='hot')
+    plt.title("out: " + str(np.sum(output)))
+    plt.pause(0.5)
+print("mae:%.1f, mse:%.1f" % (sum_mae / len(test_loader), math.sqrt(sum_mse / len(test_loader))))

@@ -4,7 +4,7 @@
 # 2018-10
 # ------------------------
 from src.utils import utils
-from src.datasets import mall_dataset, shtu_dataset, shtu_dataset_csr
+from src.datasets import mall_dataset, shtu_dataset, shtu_dataset_test, shtu_dataset_csr
 from src.models import csr_net, sa_net, tdf_net, mcnn, inception, aspp
 import torch
 import torch.utils.data

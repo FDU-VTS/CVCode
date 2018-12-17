@@ -29,6 +29,7 @@ def image_joint(image_list, opt):  # opt= vertical ,horizon
             y += height
     return new_img
 
+
 def viz_flow(flow):
     # 色调H：用角度度量，取值范围为0°～360°，从红色开始按逆时针方向计算，红色为0°，绿色为120°,蓝色为240°
     # 饱和度S：取值范围为0.0～1.0
@@ -42,34 +43,17 @@ def viz_flow(flow):
     # 也有的光流可视化讲s赋值为255，亮度代表像素位移的大小，整个图片会很暗，很少这样用
     hsv[...,2] = 255
     bgr = cv2.cvtColor(hsv,cv2.COLOR_HSV2BGR)
+
     return bgr
+
 
 def get_flow(prvs, next):
     #get GRAY  return BGR
-    # start_img = Image.open("./mall_dataset/frames/seq_000092.jpg")
-    # later_img = Image.open("./mall_dataset/frames/seq_000093.jpg")
-    # print(type(start_img))
-    # start_img = np.array(start_img)
-    # later_img = np.array(later_img)
-    # print(start_img.shape)
-    # prvs = cv2.cvtColor(start_img, cv2.COLOR_BGR2GRAY)
-    # next = cv2.cvtColor(later_img, cv2.COLOR_BGR2GRAY)
-    # print(next.shape)
-
     flow = cv2.calcOpticalFlowFarneback(prvs, next, None, 0.5, 3, 15, 3, 5, 1.2, 0)
-
     result = viz_flow(flow)
+
     return result
 
-    # start_img = Image.fromarray(start_img)
-    # later_img = Image.fromarray(later_img)
-
-    # test = cv2.cvtColor(test, cv2.COLOR_BGR2RGB)
-    # test = Image.fromarray(test)
-    # joint_image = image_joint([start_img, later_img, test], 'vertical')
-    # joint_image.show()
-    # GRAY.show()
-    # cv2.imshow('frame2',RGB)
 
 def extract_flow_thread(img_path, video_list, start, end):
     for idx in range(start, end):
@@ -100,7 +84,8 @@ def extract_flow_thread(img_path, video_list, start, end):
 def extract_flow(img_path, video_path):
     #use multi-thread
     video_list = glob.glob(video_path + '*.avi')
-    os.mkdir(img_path+'flow/')
+    if not os.path.exists(img_path+'flow/'):
+        os.mkdir(img_path+'flow/')
     threads = []
     t1 = threading.Thread(target=extract_flow_thread, args=(img_path, video_list, 0, 500))
     threads.append(t1)
@@ -118,7 +103,6 @@ def extract_flow(img_path, video_path):
     threads.append(t7)
 
     for t in threads:
-        # t.setDaemon(True)
         t.start()
     for t in threads:
         t.join()
@@ -137,13 +121,10 @@ def extract_test_flow_thread(img_path, video_path, stride):
             if (idx-49)%stride==0:
                 name = img_path + 'flow/' + video_path.split('/')[-1].replace('delogo1.avi', '') + str(idx + 1).zfill(6)
                 pre = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-                # print("pre", pre.shape)
                 flow_stride = 1
             if flow_stride == 50:
                 flow_stride = 0
                 next = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-                # print(pre.shape)
-                # print(next.shape)
                 np.save(name, get_flow(pre, next))
             elif flow_stride != 0:
                 flow_stride += 1
@@ -158,7 +139,9 @@ def extract_test_flow_thread(img_path, video_path, stride):
 
 def extract_test_flow(img_path, video_path):
     #use multi-thread
-    os.mkdir(img_path+'flow/')
+
+    if not os.path.exists(img_path+'flow/'):
+        os.mkdir(img_path+'flow/')
     threads = []
     t1 = threading.Thread(target=extract_test_flow_thread, args=(img_path, video_path+'104207_1-04-S20100821071000000E20100821120000000_delogo1.avi', 1500))
     threads.append(t1)
@@ -172,17 +155,13 @@ def extract_test_flow(img_path, video_path):
     threads.append(t5)
 
     for t in threads:
-        # t.setDaemon(True)
         t.start()
     for t in threads:
         t.join()
     print("finish!")
 
-if __name__ == '__main__':
-    # img_path = './world_expo/train_frame/'
-    # video_path = './world_expo/train_video/'
-    # extract_flow(img_path, video_path)
 
-    img_path = './world_expo/test_frame/'
-    video_path = './world_expo/test_video/'
+if __name__ == '__main__':
+    img_path = '../../data/world_expo/test_frame/'
+    video_path = '../../data/world_expo/test_video/'
     extract_test_flow(img_path, video_path)
