@@ -114,6 +114,7 @@ class WorldExpoDataset(Dataset):
             flow = np.load(self.img_path + 'flow/' + self.img_list[idx].split('/')[-1].replace('.jpg', '.npy'))
 
         density = np.load(self.img_path + 'ground_truth/' + self.img_list[idx].split('/')[-1].replace('.jpg', '.npy'))
+        density = roi(density, self.point_path, self.img_list[idx])
         density = cv2.resize(density, (0, 0), fx=0.125, fy=0.125, interpolation=cv2.INTER_CUBIC)*64
 
         # numpy_array
@@ -165,6 +166,13 @@ class WorldExpoTestDataset(Dataset):
             if os.path.exists(self.img_path + wrong_data[i]):
                 os.remove(self.img_path + wrong_data[i])
         self.img_list = glob.glob(self.img_path + self.subdir + '*.jpg')
+        if not os.path.exists(self.img_path+self.subdir + 'ground_truth/'):
+            print("Start extract")
+            os.mkdir(self.img_path + self.subdir+'ground_truth/')
+            extract_gt_thread(self.img_path+self.subdir, self.point_path, self.img_list, 0, len(self.img_list))
+            print("Finish extract")
+        else:
+            print("Already extract")
 
     def __len__(self):
         return len(self.img_list)
@@ -177,19 +185,27 @@ class WorldExpoTestDataset(Dataset):
         else:
             image = io.imread(self.img_list[idx])
             flow = np.load(self.img_path + 'flow/' + self.img_list[idx].split('/')[-1].replace('.jpg', '.npy'))
-        read_path = self.point_path + self.subdir + self.img_list[idx].split('/')[-1].replace('.jpg', '.mat')
-        input = open(read_path, 'rb')
-        check = float(str(input.read(10)).split('\'')[1].split(' ')[1])
-        input.close()
-        if check == 7.3:
-            points = np.array(h5py.File(read_path, 'r')['point_position'])
-            points = points.transpose()
-        else:
-            points = loadmat(read_path)['point_position']
+        # read_path = self.point_path + self.subdir + self.img_list[idx].split('/')[-1].replace('.jpg', '.mat')
+        # input = open(read_path, 'rb')
+        # check = float(str(input.read(10)).split('\'')[1].split(' ')[1])
+        # input.close()
+        # if check == 7.3:
+        #     points = np.array(h5py.File(read_path, 'r')['point_position'])
+        #     points = points.transpose()
+        # else:
+        #     points = loadmat(read_path)['point_position']
 
-        count = [len(points)]
-        # count type: torch.Size([1])
-        count = torch.tensor(count, dtype=torch.double)
+        # count = [len(points)]
+        # # count type: torch.Size([1])
+        # count = torch.tensor(count, dtype=torch.double)
+        density = np.load(self.img_path + self.subdir+'ground_truth/' + self.img_list[idx].split('/')[-1].replace('.jpg', '.npy'))
+        density = roi(density, self.point_path, self.img_list[idx])
+        # density = cv2.resize(density, (0, 0), fx=0.125, fy=0.125, interpolation=cv2.INTER_CUBIC)*64
+
+        # numpy_array to tensor
+        density = torch.tensor(density)
+        count = torch.sum(density).unsqueeze(0)
+
         image = roi(image, self.point_path, self.img_list[idx])
         # numpy_array
         if self.transform is not None:
