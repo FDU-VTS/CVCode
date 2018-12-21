@@ -122,7 +122,6 @@ def extract_data(mode="train", patch_number=9, part="A"):
             w_b = w // 2
             h_b = h // 2
             image_sample = image[y * h_b:(y + 1) * h_b, x * w_b:(x + 1) * w_b]
-            image_density_sample = image_density[y * h_b:(y + 1) * h_b, x * w_b:(x + 1) * w_b]
             img_idx = "{0}_{1}".format(index, j)
             np.save(os.path.join(preprocessed_mode_density, "{0}.npy".format(img_idx)), image_density_sample)
             skimage.io.imsave(os.path.join(preprocessed_mode, "{0}.jpg".format(img_idx)), image_sample)

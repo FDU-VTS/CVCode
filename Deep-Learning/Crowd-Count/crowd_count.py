@@ -33,10 +33,10 @@ def _load_dataset(dataset, zoom_size=4,transform=None):
     test_loader = None
     if dataset == "shtu_dataset":
         print("train data loading..........")
-        shanghaitech_dataset = shtu_dataset_csr.ShanghaiTechDataset(mode="train", zoom_size=zoom_size, transform=transform)
+        shanghaitech_dataset = shtu_dataset.ShanghaiTechDataset(mode="train", zoom_size=zoom_size, transform=transform)
         train_loader = torch.utils.data.DataLoader(shanghaitech_dataset, batch_size=1, shuffle=True, num_workers=4)
         print("test data loading............")
-        test_data = shtu_dataset_csr.ShanghaiTechDataset(mode="test", transform=transform)
+        test_data = shtu_dataset.ShanghaiTechDataset(mode="test", transform=transform)
         test_loader = torch.utils.data.DataLoader(test_data, batch_size=1, shuffle=False, num_workers=4)
     elif dataset == "mall_dataset":
         print("train data loading..........")
