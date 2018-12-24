@@ -6,7 +6,7 @@ import re
 import numpy as np
 
 
-class ImgInfo():
+class ImgInfo:
 
     def __init__(self, image_name, number):
         self.image_name = image_name

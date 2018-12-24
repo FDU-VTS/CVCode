@@ -35,8 +35,7 @@ class ShanghaiTechDataset(Dataset):
         index = 0
         for img_path in self.paths:
             gt_path = img_path.replace('.jpg', '.h5').replace('images', 'ground_truth')
-            img = skimage.io.imread(img_path)
-            img = skimage.color.grey2rgb(img)
+            img = Image.open(img_path).convert('RGB')
             gt_file = h5py.File(gt_path)
             den = np.asarray(gt_file['density'])
             h = den.shape[0]

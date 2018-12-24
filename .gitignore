@@ -9,3 +9,4 @@ data
 alex_model.pkl
 *data
 mall_dataset
+*.tar

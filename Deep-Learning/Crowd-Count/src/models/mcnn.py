@@ -3,6 +3,15 @@
 # written by Songjian Chen
 # 2018-10
 # ------------------------
+"""
+@inproceedings{zhang2016single,
+  title={Single-image crowd counting via multi-column convolutional neural network},
+  author={Zhang, Yingying and Zhou, Desen and Chen, Siqin and Gao, Shenghua and Ma, Yi},
+  booktitle={Proceedings of the IEEE conference on computer vision and pattern recognition},
+  pages={589--597},
+  year={2016}
+}
+"""
 import torch.nn as nn
 import torch
 from .network import ConvUnit

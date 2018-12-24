@@ -12,6 +12,7 @@ import numpy as np
 import cv2
 import random
 import torch
+import h5py
 
 
 def get_data(mode="train", zoom_size=4):
@@ -37,7 +38,8 @@ def get_data(mode="train", zoom_size=4):
         zoom_w = (w // 8) * 8
         img = cv2.resize(img, (zoom_w, zoom_h), interpolation=cv2.INTER_AREA)
         # load densities
-        den = np.load(os.path.join(ground_truth, os.path.splitext(file_name)[0] + '.npy')).astype(np.float32)
+        hf = h5py.File(os.path.join(ground_truth, os.path.splitext(file_name)[0] + '.h5'))
+        den = np.asarray(hf['density'])
         zoom_h = zoom_h // zoom_size
         zoom_w = zoom_w // zoom_size
         den = cv2.resize(den, (zoom_w, zoom_h), interpolation=cv2.INTER_AREA)

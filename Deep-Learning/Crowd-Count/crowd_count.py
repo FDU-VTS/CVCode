@@ -5,7 +5,7 @@
 # ------------------------
 from src.utils import utils
 from src.datasets import mall_dataset, shtu_dataset, shtu_dataset_test, shtu_dataset_csr
-from src.models import csr_net, sa_net, tdf_net, mcnn, inception, aspp
+from src.models import csr_net, sa_net, tdf_net, mcnn, aspp, attention_net
 import torch
 import torch.utils.data
 import torch.optim as optim
@@ -23,8 +23,8 @@ models = {
     'csr_net': csr_net.CSRNet(),
     'sa_net': sa_net.SANet(input_channels=3, kernel_size=[1, 3, 5, 7], bias=True),
     'tdf_net': utils.weights_normal_init(tdf_net.TDFNet(), dev=0.01),
-    'inception': inception.Inception(),
-    'aspp': aspp.ASPP()
+    'aspp': aspp.ASPP(),
+    'pad_net': attention_net.PaDNet()
 }
 
 
@@ -33,10 +33,10 @@ def _load_dataset(dataset, zoom_size=4,transform=None):
     test_loader = None
     if dataset == "shtu_dataset":
         print("train data loading..........")
-        shanghaitech_dataset = shtu_dataset.ShanghaiTechDataset(mode="train", zoom_size=zoom_size, transform=transform)
+        shanghaitech_dataset = shtu_dataset_csr.ShanghaiTechDataset(mode="train", zoom_size=zoom_size, transform=transform)
         train_loader = torch.utils.data.DataLoader(shanghaitech_dataset, batch_size=1, shuffle=True, num_workers=4)
         print("test data loading............")
-        test_data = shtu_dataset.ShanghaiTechDataset(mode="test", transform=transform)
+        test_data = shtu_dataset_csr.ShanghaiTechDataset(mode="test", transform=transform)
         test_loader = torch.utils.data.DataLoader(test_data, batch_size=1, shuffle=False, num_workers=4)
     elif dataset == "mall_dataset":
         print("train data loading..........")
@@ -74,7 +74,7 @@ def train(zoom_size=4, model="mcnn", dataset="shtu_dataset", learning_rate=1e-5,
     # init optimizer
     optimizer = _init_optimizer(optim_name, net.parameters(), learning_rate)
     print("start to train net.....")
-    model_dir = model + "_" + dataset
+    model_dir = model + "_" + dataset + "_300"
     # whether tensorboardX is needed
     writer = SummaryWriter('runs/' + model_dir) if display else None
     # create model catalog

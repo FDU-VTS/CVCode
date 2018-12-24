@@ -14,6 +14,7 @@ import math
 import warnings
 import random
 import h5py
+import scipy
 warnings.filterwarnings("ignore")
 root = "../../data/shtu_dataset"
 
@@ -133,9 +134,9 @@ def extract_test_data(part="A"):
     num_images = 183 if part == "A" else 317
     test_data_path = os.path.join(root, "original/part_{part}_final/test_data/images".format(part=part))
     test_ground_path = os.path.join(root, "original/part_{part}_final/test_data/ground_truth".format(part=part))
-    test_density_path = os.path.join(root, "shtu_dataset/preprocessed/test_density")
+    test_density_path = os.path.join(root, "preprocessed/test_density")
     print("begin to preprocess test data........")
-    for index in range(1, num_images):
+    for index in range(133, num_images):
         if index % 10 == 0:
             print("{num} images are done".format(num=index))
         image_path = os.path.join(test_data_path, "IMG_{0}.jpg".format(index))

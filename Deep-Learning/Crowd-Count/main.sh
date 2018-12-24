@@ -22,4 +22,6 @@ case ${model_name} in
     "aspp")
         python crowd_count.py aspp 8 ${dataset} 1e-7 SGD
     ;;
+    "pad_net")
+        python crowd_count.py pad_net 8 ${dataset} 1e-7 SGD
 esac

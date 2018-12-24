@@ -8,7 +8,7 @@ import torch.nn as nn
 import torch
 
 
-class LossFunction():
+class LossFunction:
 
     def __init__(self, model):
         self.size_average = True
@@ -46,7 +46,7 @@ class LossFunction():
             return self._sa_loss(output, ground_truth)
         elif self.model == "test":
             return self._get_test_loss(output, ground_truth)
-        elif self.model == "csr_net" or self.model == "aspp":
+        elif self.model in ["csr_net", "aspp", "pad_net"]:
             self.size_average = False
             return self._get_loss(output, ground_truth)
         else:
