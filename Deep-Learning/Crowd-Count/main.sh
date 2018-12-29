@@ -16,12 +16,12 @@ case ${model_name} in
     "tdf_net")
         python crowd_count.py tdf_net 4 ${dataset} 1e-7 SGD
     ;;
-    "inception")
-        python crowd_count.py inception 16 ${dataset} 1e-6 Adam
-    ;;
-    "aspp")
-        python crowd_count.py aspp 8 ${dataset} 1e-7 SGD
-    ;;
     "pad_net")
-        python crowd_count.py pad_net 8 ${dataset} 1e-7 SGD
+        python crowd_count.py pad_net 8 ${dataset} 1e-5 Adam
+    ;;
+    "vgg")
+        python crowd_count.py vgg 8 ${dataset} 1e-7 SGD
+    ;;
+    "cbam_net")
+        python crowd_count.py cbam_net 8 ${dataset} 1e-7 SGD
 esac

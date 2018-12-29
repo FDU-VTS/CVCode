@@ -52,3 +52,6 @@ def get_cluster(gt_path="../../data/shtu_dataset/original/part_A_final/train_dat
         print([(img_info.image_name, img_info.number) for img_info in cluster[i, 1]])
 
     return cluster
+
+
+cluster = get_cluster()

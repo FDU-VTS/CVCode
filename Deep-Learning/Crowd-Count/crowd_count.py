@@ -4,8 +4,8 @@
 # 2018-10
 # ------------------------
 from src.utils import utils
-from src.datasets import mall_dataset, shtu_dataset, shtu_dataset_test, shtu_dataset_csr
-from src.models import csr_net, sa_net, tdf_net, mcnn, aspp, attention_net
+from src.datasets import mall_dataset, shtu_dataset, shtu_dataset_csr
+from src.models import csr_net, sa_net, tdf_net, mcnn, pad_net, vgg, cbam_net
 import torch
 import torch.utils.data
 import torch.optim as optim
@@ -16,6 +16,8 @@ import numpy as np
 from tensorboardX import SummaryWriter
 import os
 from torchvision import transforms
+import time
+import datetime
 warnings.filterwarnings("ignore")
 DEVICE = "cuda:0" if torch.cuda.is_available() else "cpu"
 models = {
@@ -23,8 +25,9 @@ models = {
     'csr_net': csr_net.CSRNet(),
     'sa_net': sa_net.SANet(input_channels=3, kernel_size=[1, 3, 5, 7], bias=True),
     'tdf_net': utils.weights_normal_init(tdf_net.TDFNet(), dev=0.01),
-    'aspp': aspp.ASPP(),
-    'pad_net': attention_net.PaDNet()
+    'pad_net': pad_net.PaDNet(),
+    'vgg': vgg.VGG(),
+    'cbam_net': cbam_net.CBAMNet()
 }
 
 
@@ -74,7 +77,7 @@ def train(zoom_size=4, model="mcnn", dataset="shtu_dataset", learning_rate=1e-5,
     # init optimizer
     optimizer = _init_optimizer(optim_name, net.parameters(), learning_rate)
     print("start to train net.....")
-    model_dir = model + "_" + dataset + "_300"
+    model_dir = "{0}_{1}_{2}".format(model, dataset, datetime.datetime.now().day)
     # whether tensorboardX is needed
     writer = SummaryWriter('runs/' + model_dir) if display else None
     # create model catalog

@@ -8,7 +8,7 @@ import torch.nn as nn
 
 class ConvUnit(nn.Module):
 
-    def __init__(self, in_channels, out_channels, kernel_size, stride=1, bn=True):
+    def __init__(self, in_channels, out_channels, kernel_size, stride=1, bn=False):
         super(ConvUnit, self).__init__()
         padding = (kernel_size - 1) // 2
         self.features = nn.Sequential(

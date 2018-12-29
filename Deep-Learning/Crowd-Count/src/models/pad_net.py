@@ -100,7 +100,6 @@ class PaDNet(nn.Module):
         x = self.out_layer(x)
         return x
 
-
     def sig(self, classify):
         v1, v2, v3 = classify
         sum = math.exp(v1) + math.exp(v2) + math.exp(v3)

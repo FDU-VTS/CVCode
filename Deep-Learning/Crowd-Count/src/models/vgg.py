@@ -11,9 +11,9 @@ from src.utils import utils
 
 class VGG(nn.Module):
 
-    def __init__(self, load_weights=False):
+    def __init__(self, load_weights=True):
         super(VGG, self).__init__()
-        print("*****init CSR net*****")
+        print("*****init VGG net*****")
         self.seen = 0
         self.frontend_feat = [64, 64, 'M', 128, 128, 'M', 256, 256, 256, 'M', 512, 512, 512]
         self.backend_feat = [512, 512, 512, 256, 128, 64]
