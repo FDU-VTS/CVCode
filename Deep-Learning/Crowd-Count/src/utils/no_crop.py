@@ -51,7 +51,7 @@ part_A_train = os.path.join(root,'part_A_final/train_data','images')
 part_A_test = os.path.join(root,'part_A_final/test_data','images')
 part_B_train = os.path.join(root,'part_B_final/train_data','images')
 part_B_test = os.path.join(root,'part_B_final/test_data','images')
-path_sets = [part_A_train,part_A_test]
+path_sets = [part_B_train,part_B_test]
 
 for path in path_sets:
     for img_path in glob.glob(os.path.join(path, '*.jpg')):
