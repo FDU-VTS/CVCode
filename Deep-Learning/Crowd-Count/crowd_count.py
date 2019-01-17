@@ -4,8 +4,8 @@
 # 2018-10
 # ------------------------
 from src.utils import utils
-from src.datasets import mall_dataset, shtu_dataset, shtu_dataset_csr
-from src.models import csr_net, sa_net, tdf_net, mcnn, pad_net, vgg, cbam_net
+from src.datasets import mall_dataset, shtu_dataset, shtu_dataset_csr, big_dataset
+from src.models import csr_net, sa_net, tdf_net, mcnn, pad_net, vgg, cbam_net, big_net, adcrowd_net
 import torch
 import torch.utils.data
 import torch.optim as optim
@@ -27,7 +27,9 @@ models = {
     'tdf_net': utils.weights_normal_init(tdf_net.TDFNet(), dev=0.01),
     'pad_net': pad_net.PaDNet(),
     'vgg': vgg.VGG(),
-    'cbam_net': cbam_net.CBAMNet()
+    'cbam_net': cbam_net.CBAMNet(),
+    'big_net': big_net.BIGNet(),
+    'adcrowd_net': adcrowd_net.ADCrowdNet()
 }
 
 
@@ -48,6 +50,13 @@ def _load_dataset(dataset, zoom_size=4,transform=None):
         print("test data loading............")
         mall_test_data = mall_data
         test_loader = torch.utils.data.DataLoader(mall_test_data, batch_size=1, shuffle=False, num_workers=4)
+    elif dataset == "big_dataset":
+        print("train data loading..........")
+        big_data = big_dataset.BigDataset(mode="train", zoom_size=zoom_size, transform=transform)
+        train_loader = torch.utils.data.DataLoader(big_data, batch_size=1, shuffle=True, num_workers=4)
+        print("test data loading............")
+        test_data = big_dataset.BigDataset(mode="test", zoom_size=zoom_size, transform=transform)
+        test_loader = torch.utils.data.DataLoader(test_data, batch_size=1, shuffle=False, num_workers=4)
 
     return train_loader, test_loader
 
@@ -77,7 +86,8 @@ def train(zoom_size=4, model="mcnn", dataset="shtu_dataset", learning_rate=1e-5,
     # init optimizer
     optimizer = _init_optimizer(optim_name, net.parameters(), learning_rate)
     print("start to train net.....")
-    model_dir = "{0}_{1}_{2}".format(model, dataset, datetime.datetime.now().day)
+    time_now = time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(time.time()))
+    model_dir = "{0}_{1}_{2}".format(model, dataset, time_now)
     # whether tensorboardX is needed
     writer = SummaryWriter('runs/' + model_dir) if display else None
     # create model catalog
@@ -89,6 +99,7 @@ def train(zoom_size=4, model="mcnn", dataset="shtu_dataset", learning_rate=1e-5,
     test_loss = utils.LossFunction("test")
     min_mae = sys.maxsize
     min_mse = sys.maxsize
+    best_model_name = "{model}_{time}.pkl".format(model=model, time=time_now)
     for epoch in range(2000):
         sum_loss = 0.0
         temp_loss = 0.0
@@ -118,7 +129,7 @@ def train(zoom_size=4, model="mcnn", dataset="shtu_dataset", learning_rate=1e-5,
             sum_mae += float(mae)
             sum_mse += float(mse)
         if sum_mae / len(test_loader) < min_mae:
-            torch.save(net.state_dict(), "./models/{model_name}/best_{model_name}.pkl".format(model_name=model))
+            torch.save(net.state_dict(), "./models/{model_name}/{best_model_name}".format(model_name=model, best_model_name=best_model_name))
             min_mae = sum_mae / len(test_loader)
             min_mse = math.sqrt(sum_mse / len(test_loader))
         print("mae:%.1f, mse:%.1f, best_mae:%.1f, best_mse:%.1f" % (sum_mae / len(test_loader),
@@ -128,7 +139,7 @@ def train(zoom_size=4, model="mcnn", dataset="shtu_dataset", learning_rate=1e-5,
             writer.add_scalar(model_dir + "/loss", np.asarray(sum_loss / len(test_loader), dtype=np.float32), epoch)
             writer.add_scalar(model_dir + "/mae", np.asarray(sum_mae / len(test_loader)), epoch)
             writer.add_scalar(model_dir + "/mse", np.asarray(math.sqrt(sum_mse / len(test_loader))), epoch)
-            if epoch + 1 == 2000:
+            if epoch == 1999:
                 writer.close()
 
 

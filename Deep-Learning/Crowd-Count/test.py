@@ -5,7 +5,7 @@
 # ------------------------
 from src.utils import utils
 from src.datasets import mall_dataset, shtu_dataset, shtu_dataset_csr
-from src.models import csr_net, sa_net, tdf_net, mcnn, vgg
+from src.models import csr_net, sa_net, tdf_net, mcnn, vgg, cbam_net, big_net
 import torch
 import torch.utils.data
 import torch.optim as optim
@@ -25,8 +25,9 @@ import glob
 import matplotlib.pyplot as plt
 import re
 import h5py
+from torch.utils.data import Dataset
 warnings.filterwarnings("ignore")
-DEVICE = "cuda:3" if torch.cuda.is_available() else "cpu"
+DEVICE = "cuda:1" if torch.cuda.is_available() else "cpu"
 """
  load data ->
  init net ->
@@ -37,22 +38,64 @@ DEVICE = "cuda:3" if torch.cuda.is_available() else "cpu"
  dataset: shtu_dataset | mall_dataset
 """
 
+class testDataset(Dataset):
+
+    def __init__(self, mode="train", **kwargs):
+        self.root = "./data/shtu_dataset/original/part_A_final/train_data/" if mode == "train" else \
+                "./data/shtu_dataset/original/part_A_final/test_data/"
+        self.paths = glob.glob(self.root + "images/*.jpg")
+        if mode == "train":
+            self.paths *= 4
+        self.transform = kwargs['transform']
+        self.length = len(self.paths)
+        self.dataset = self.load_data()
+
+    def __len__(self):
+        return self.length
+
+    def __getitem__(self, item):
+        img, den = self.dataset[item]
+        img_cp = img
+        if self.transform is not None:
+            img = self.transform(img)
+        return img, den, img_cp
+
+    def load_data(self):
+        result = []
+        index = 0
+        for img_path in self.paths:
+            gt_path = img_path.replace('.jpg', '.h5').replace('images', 'ground_truth')
+            img = skimage.io.imread(img_path)
+            img = grey2rgb(img)
+            gt_file = h5py.File(gt_path)
+            den = np.asarray(gt_file['density'])
+            h = den.shape[0]
+            w = den.shape[1]
+            h_trans = h // 8
+            w_trans = w // 8
+            den = cv2.resize(den, (w_trans, h_trans),
+                             interpolation=cv2.INTER_CUBIC) * (h * w) / (h_trans * w_trans)
+            result.append([img, den])
+            if index % 100 == 99 or index == self.length:
+                print("load {0}/{1} images".format(index + 1, self.length))
+            index += 1
+        return result
+
 
 transform = transforms.Compose([transforms.ToTensor(),
                                 transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
                                 ])
-test_data =shtu_dataset_csr.ShanghaiTechDataset(mode="test", transform=transform)
+test_data = testDataset(mode="test", transform=transform)
 test_loader = torch.utils.data.DataLoader(test_data, batch_size=1, shuffle=False, num_workers=4)
-net = vgg.VGG()
-# net.load_state_dict(torch.load("./models/csr_net/best_csr_net_4.pkl"))
-net.load_state_dict(torch.load("./models/vgg/best_vgg.pkl", map_location="cpu"))
+net = cbam_net.CBAMNet()
+net.load_state_dict(torch.load("./models/cbam_net/best_cbam_net.pkl", map_location="cpu"))
 net = net.to(DEVICE)
 net = net.eval()
 sum_mae = 0.0
 sum_mse = 0.0
 test_loss = utils.LossFunction("test")
-save_path = "./results/"
 for index, (input, ground_truth, input_cp) in enumerate(test_loader):
+    input_cp = input_cp.numpy()[0]
     input = input.to(DEVICE)
     ground_truth = ground_truth.float().to(DEVICE)
     output = net(input)
