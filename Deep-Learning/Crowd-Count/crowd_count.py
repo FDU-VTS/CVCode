@@ -70,7 +70,7 @@ def _load_dataset(dataset, zoom_size=4,transform=None):
         train_loader = torch.utils.data.DataLoader(train_data, batch_size=1, shuffle=True, num_workers=4)
         print("test data loading............")
         test_data = ucf_qnrf.UCFQNRF(mode="test", zoom_size=zoom_size, transform=transform)
-        test_loader = torch.utils.data.DataLoader(test_data, batch_size=, shuffle=False, num_workers=4)
+        test_loader = torch.utils.data.DataLoader(test_data, batch_size=1, shuffle=False, num_workers=4)
 
     return train_loader, test_loader
 
