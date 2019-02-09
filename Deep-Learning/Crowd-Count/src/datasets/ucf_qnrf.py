@@ -18,8 +18,6 @@ class UCFQNRF(Dataset):
         self.root = "./data/UCF-QNRF_ECCV18/Train/" if mode == "train" else \
                 "./data/UCF-QNRF_ECCV18/Test/"
         self.paths = glob.glob(self.root + "*.jpg")
-        if mode == "train":
-            self.paths *= 2
         self.transform = kwargs['transform']
         self.length = len(self.paths)
         self.dataset = self.load_data()
