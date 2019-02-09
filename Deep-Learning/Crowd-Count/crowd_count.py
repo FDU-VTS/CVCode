@@ -4,7 +4,7 @@
 # 2018-10
 # ------------------------
 from src.utils import utils
-from src.datasets import mall_dataset, shtu_dataset, shtu_dataset_csr, big_dataset
+from src.datasets import mall_dataset, shtu_dataset, shtu_dataset_csr, big_dataset, ucf_cc_50
 from src.models import csr_net, sa_net, tdf_net, mcnn, pad_net, vgg, cbam_net, big_net, adcrowd_net
 import torch
 import torch.utils.data
@@ -56,6 +56,13 @@ def _load_dataset(dataset, zoom_size=4,transform=None):
         train_loader = torch.utils.data.DataLoader(big_data, batch_size=1, shuffle=True, num_workers=4)
         print("test data loading............")
         test_data = big_dataset.BigDataset(mode="test", zoom_size=zoom_size, transform=transform)
+        test_loader = torch.utils.data.DataLoader(test_data, batch_size=1, shuffle=False, num_workers=4)
+    elif dataset == "ucf_cc":
+        print("train data loading..........")
+        ucf_cc = ucf_cc_50.UCFCC50(mode="train", zoom_size=zoom_size, transform=transform)
+        train_loader = torch.utils.data.DataLoader(ucf_cc, batch_size=1, shuffle=True, num_workers=4)
+        print("test data loading............")
+        test_data = ucf_cc_50.UCFCC50(mode="test", zoom_size=zoom_size, transform=transform)
         test_loader = torch.utils.data.DataLoader(test_data, batch_size=1, shuffle=False, num_workers=4)
 
     return train_loader, test_loader
