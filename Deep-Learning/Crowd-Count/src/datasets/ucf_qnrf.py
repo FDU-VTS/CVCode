@@ -10,6 +10,7 @@ import numpy as np
 import h5py
 import skimage.io
 import skimage.color
+import skimage.transform
 
 
 class UCFQNRF(Dataset):
@@ -36,7 +37,8 @@ class UCFQNRF(Dataset):
         index = 0
         for img_path in self.paths:
             gt_path = img_path.replace('.jpg', '.h5').replace('images', 'ground_truth')
-            img = Image.open(img_path).convert('RGB')
+            img = skimage.io.imread(img_path)
+            img = skimage.color.grey2rgb(img)
             gt_file = h5py.File(gt_path)
             den = np.asarray(gt_file['density'])
             h = den.shape[0]
@@ -45,7 +47,7 @@ class UCFQNRF(Dataset):
             w_trans = w // 16
             den = cv2.resize(den, (w_trans, h_trans),
                              interpolation=cv2.INTER_CUBIC) * (h * w) / (h_trans * w_trans)
-            img = cv2.resize(img, (h // 2, w // 2))
+            img = skimage.transform.resize(img, (h // 2, w // 2))
             result.append([img, den])
             if index % 100 == 99 or index == self.length:
                 print("load {0}/{1} images".format(index + 1, self.length))
