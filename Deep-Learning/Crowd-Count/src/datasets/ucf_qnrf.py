@@ -45,7 +45,7 @@ class UCFQNRF(Dataset):
             w_trans = w // 16
             den = cv2.resize(den, (w_trans, h_trans),
                              interpolation=cv2.INTER_CUBIC) * (h * w) / (h_trans * w_trans)
-            img = cv2.resize(img, (h // 2, w // 2), interpolation=cv2.INTER_CUBIC)
+            img = cv2.resize(img, (h // 2, w // 2))
             result.append([img, den])
             if index % 100 == 99 or index == self.length:
                 print("load {0}/{1} images".format(index + 1, self.length))
