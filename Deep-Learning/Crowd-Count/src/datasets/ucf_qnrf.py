@@ -37,7 +37,7 @@ class UCFQNRF(Dataset):
         index = 0
         for img_path in self.paths:
             gt_path = img_path.replace('.jpg', '.h5').replace('images', 'ground_truth')
-            img = skimage.io.imread(img_path)
+            img = skimage.io.imread(img_path, plugin='matplotlib')
             img = skimage.color.grey2rgb(img)
             gt_file = h5py.File(gt_path)
             den = np.asarray(gt_file['density'])
