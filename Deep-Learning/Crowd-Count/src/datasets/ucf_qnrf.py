@@ -43,11 +43,11 @@ class UCFQNRF(Dataset):
             den = np.asarray(gt_file['density'])
             h = den.shape[0]
             w = den.shape[1]
-            h_trans = h // 16
-            w_trans = w // 16
+            h_trans = h // 24
+            w_trans = w // 24
             den = cv2.resize(den, (w_trans, h_trans),
                              interpolation=cv2.INTER_CUBIC) * (h * w) / (h_trans * w_trans)
-            img = skimage.transform.resize(img, (img.shape[0] // 2, img.shape[1] // 2))
+            img = skimage.transform.resize(img, (img.shape[0] // 3, img.shape[1] // 3))
             result.append([img, den])
             if index % 100 == 99 or index == self.length:
                 print("load {0}/{1} images".format(index + 1, self.length))
