@@ -119,7 +119,7 @@ def train(zoom_size=4, model="mcnn", dataset="shtu_dataset", learning_rate=1e-5,
         temp_loss = 0.0
         print("{0} epoches / 2000 epoches are done".format(epoch))
         for i, (input, ground_truth) in enumerate(train_loader):
-            input = input.to(DEVICE)
+            input = input.float().to(DEVICE)
             ground_truth = ground_truth.float().to(DEVICE)
             ground_truth = torch.unsqueeze(ground_truth, 0)
             output = net(input)
@@ -136,7 +136,7 @@ def train(zoom_size=4, model="mcnn", dataset="shtu_dataset", learning_rate=1e-5,
         sum_mae = 0.0
         sum_mse = 0.0
         for input, ground_truth in iter(test_loader):
-            input = input.to(DEVICE)
+            input = input.float().to(DEVICE)
             ground_truth = ground_truth.float().to(DEVICE)
             output = net(input)
             mae, mse = test_loss(output, ground_truth)

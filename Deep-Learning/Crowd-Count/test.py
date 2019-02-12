@@ -38,8 +38,8 @@ DEVICE = "cuda:1" if torch.cuda.is_available() else "cpu"
  dataset: shtu_dataset | mall_dataset
 """
 
-img_path = "./data/UCF-QNRF_ECCV18/TRAIN/img_0001.jpg"
-img = skimage.io.imread(img_path)
+img_path = "./data/UCF-QNRF_ECCV18/TRAIN/img_0006.jpg"
+img = skimage.io.imread(img_path, plugin='matplotlib')
 img = skimage.color.grey2rgb(img)
 img = skimage.transform.resize(img, (img.shape[0] // 2, img.shape[1] // 2))
 
