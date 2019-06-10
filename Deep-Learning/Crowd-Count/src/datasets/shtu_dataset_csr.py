@@ -12,8 +12,8 @@ import skimage.color
 class ShanghaiTechDataset(Dataset):
 
     def __init__(self, mode="train", **kwargs):
-        self.root = "./data/shtu_dataset/original/part_B_final/train_data/" if mode == "train" else \
-                "./data/shtu_dataset/original/part_B_final/test_data/"
+        self.root = "./data/shtu_dataset/original/part_A_final/train_data/" if mode == "train" else \
+                "./data/shtu_dataset/original/part_A_final/test_data/"
         self.paths = glob.glob(self.root + "images/*.jpg")
         if mode == "train":
             self.paths *= 4
@@ -38,6 +38,7 @@ class ShanghaiTechDataset(Dataset):
             img = Image.open(img_path).convert('RGB')
             gt_file = h5py.File(gt_path)
             den = np.asarray(gt_file['density'])
+            gt_file.close()
             h = den.shape[0]
             w = den.shape[1]
             h_trans = h // 8

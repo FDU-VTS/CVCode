@@ -245,7 +245,7 @@ def selective_search(im_orig, scale=1.0, sigma=0.8, min_size=50):
     ----------
         im_orig : ndarray
             Input image
-        scale : int
+        scale : int`
             Free parameter. Higher means larger clusters in felzenszwalb segmentation.
         sigma : float
             Width of Gaussian kernel for felzenszwalb segmentation.

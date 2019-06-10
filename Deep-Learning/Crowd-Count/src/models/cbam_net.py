@@ -74,6 +74,9 @@ class CBAMNet(nn.Module):
         self.frontend = make_layers(self.frontend_feat)
         self.backend = make_layers(self.backend_feat, in_channels=512)
         self.output_layer = nn.Conv2d(64, 1, kernel_size=1)
+
+        self.weight_result = 0
+
         if not load_weights:
             mod = models.vgg16(pretrained=True)
             utils.weights_normal_init(self)
@@ -83,9 +86,12 @@ class CBAMNet(nn.Module):
     def forward(self, x):
         x = self.frontend(x)
         x = self.backend(x)
+        self.weight_result = x
         x = self.output_layer(x)
         return x
 
+    def get_weight(self):
+        return self.weight_result
 
 def make_layers(cfg, in_channels=3, batch_norm=False):
     layers = []

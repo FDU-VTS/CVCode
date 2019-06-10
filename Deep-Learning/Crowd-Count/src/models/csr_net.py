@@ -35,6 +35,9 @@ class CSRNet(nn.Module):
     def forward(self, x):
         x = self.frontend(x)
         x = self.backend(x)
+
+        self.weight2 = x
+
         x = self.output_layer(x)
         return x
 

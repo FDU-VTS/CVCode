@@ -85,7 +85,10 @@ def _init_optimizer(optimizer_name, parameters, learning_rate, momentum=0.95, we
     return optimizer
 
 
-def train(zoom_size=4, model="mcnn", dataset="shtu_dataset", learning_rate=1e-5, optim_name="SGD", pretrain=False, display=True):
+def train(zoom_size=4, model="mcnn", dataset="shtu_dataset", learning_rate=1e-5, optim_name="SGD", pretrain=False, display=False):
+
+    comparsion_time = []
+
     # load data
     transform = transforms.Compose([transforms.ToTensor(),
                                     transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
@@ -149,12 +152,14 @@ def train(zoom_size=4, model="mcnn", dataset="shtu_dataset", learning_rate=1e-5,
         print("mae:%.1f, mse:%.1f, best_mae:%.1f, best_mse:%.1f" % (sum_mae / len(test_loader),
                                                                     math.sqrt(sum_mse / len(test_loader)), min_mae, min_mse))
         print("sum loss is {0}".format(sum_loss / len(test_loader)))
+        comparsion_time.append([sum_mae / len(test_loader), epoch])
         if display:
             writer.add_scalar(model_dir + "/loss", np.asarray(sum_loss / len(test_loader), dtype=np.float32), epoch)
             writer.add_scalar(model_dir + "/mae", np.asarray(sum_mae / len(test_loader)), epoch)
             writer.add_scalar(model_dir + "/mse", np.asarray(math.sqrt(sum_mse / len(test_loader))), epoch)
             if epoch == 1999:
                 writer.close()
+    np.save(os.path.join())
 
 
 if __name__ == "__main__":
